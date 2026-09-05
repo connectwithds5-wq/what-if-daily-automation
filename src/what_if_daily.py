@@ -31,6 +31,13 @@ METADATA = OUTPUT / "metadata.json"
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY is missing")
+
+GEMINI_CLIENT = genai.Client(
+    api_key=GEMINI_API_KEY
+)
+
 VOICE = os.getenv(
     "TTS_VOICE",
     "en-US-AndrewMultilingualNeural"
@@ -1506,10 +1513,8 @@ Do not explain anything.
 """
 
     for attempt in range(5):
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt
-        )
+        response = GEMINI_CLIENT.models.generate_content(
+            model=GEMINI_MODEL,contents=prompt)
 
         topic = response.text.strip()
         topic = re.sub(r"[\r\n]+", " ", topic).strip()
