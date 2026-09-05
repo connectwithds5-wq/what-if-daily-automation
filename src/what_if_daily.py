@@ -1516,7 +1516,7 @@ def find_best_image(
         # NASA
         nasa_results = nasa_search(
             q,
-            10
+            8
         )
 
         for item in nasa_results:
@@ -1529,7 +1529,7 @@ def find_best_image(
         # Wikimedia
         wiki_results = wikimedia_search(
             q,
-            10
+            6
         )
 
         for item in wiki_results:
