@@ -2626,25 +2626,12 @@ def main():
 
     clean()
 
-    topic_index = int(
-        os.getenv(
-            "TOPIC_INDEX",
-            "0"
-        )
-    )
+    manual_topic = os.getenv("WHAT_IF_TOPIC", "").strip()
 
-    topic = (
-        os.getenv(
-            "WHAT_IF_TOPIC",
-            ""
-        ).strip()
-        or
-        TOPICS[
-            topic_index
-            % len(TOPICS)
-        ]
-    )
-
+    if manual_topic:
+        topic = manual_topic
+    else:
+        topic = generate_unique_topic()
     print(
         "Topic:",
         topic
