@@ -81,7 +81,39 @@ def load_topic_history():
         )
 
     return []
+# =========================================================
+# IMAGE SEARCH FILTER
+# =========================================================
 
+BAD_WORDS = {
+    "diagram",
+    "illustration",
+    "drawing",
+    "cartoon",
+    "animation",
+    "animated",
+    "cgi",
+    "render",
+    "rendering",
+    "3d render",
+    "concept art",
+    "digital art",
+    "artwork",
+    "painting",
+    "sketch",
+    "graphic",
+    "infographic",
+    "logo",
+    "map",
+    "flag",
+    "poster",
+    "icon",
+    "screenshot",
+    "computer generated",
+    "generated image",
+    "ai generated",
+    "ai art"
+}
 
 def save_topic_history(history):
     TOPIC_HISTORY_FILE.write_text(
