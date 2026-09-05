@@ -1481,14 +1481,30 @@ def create_realistic_scene(
         "mode": mode
     }
 def generate_unique_topic():
+
+    if not GEMINI_API_KEY:
+        raise RuntimeError(
+            "GEMINI_API_KEY is missing"
+        )
+
     history_file = ROOT / "topic_history.json"
 
     if history_file.exists():
         try:
             history = json.loads(
-                history_file.read_text(encoding="utf-8")
+                history_file.read_text(
+                    encoding="utf-8"
+                )
             )
-        except Exception:
+
+            if not isinstance(history, list):
+                history = []
+
+        except Exception as e:
+            print(
+                "Topic history read failed:",
+                e
+            )
             history = []
     else:
         history = []
@@ -1503,43 +1519,186 @@ The topic must be:
 - easy to understand
 - suitable for a 60-second video
 - different from all previous topics
+- NOT a rewording of an old topic
+- NOT the same basic scenario as an old topic
 
 Previous topics:
-{json.dumps(history[-100:], ensure_ascii=False)}
+{json.dumps(history[-200:], ensure_ascii=False)}
 
 Return ONLY the topic.
 Start with "What If".
 Do not explain anything.
 """
 
-    for attempt in range(5):
-        response = GEMINI_CLIENT.models.generate_content(
-            model=GEMINI_MODEL,contents=prompt)
+    for attempt in range(1, 6):
 
-        topic = response.text.strip()
-        topic = re.sub(r"[\r\n]+", " ", topic).strip()
+        try:
 
-        if topic and topic.lower() not in {
-            x.lower() for x in history
-        }:
+            print("")
+            print("======================================")
+            print(
+                f"TOPIC GENERATION ATTEMPT "
+                f"{attempt}/5"
+            )
+            print("======================================")
+
+            response = GEMINI_CLIENT.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt
+            )
+
+            if (
+                not response
+                or not getattr(
+                    response,
+                    "text",
+                    None
+                )
+            ):
+                raise RuntimeError(
+                    "Gemini returned an empty response."
+                )
+
+            topic = response.text.strip()
+
+            if topic.startswith("```"):
+                topic = re.sub(
+                    r"^```(?:json)?",
+                    "",
+                    topic
+                ).strip()
+
+                topic = re.sub(
+                    r"```$",
+                    "",
+                    topic
+                ).strip()
+
+            topic = safe_ascii(
+                topic,
+                180
+            ).strip()
+
+            if not topic:
+                raise RuntimeError(
+                    "Gemini returned an empty topic."
+                )
+
+            if not topic.lower().startswith(
+                "what if"
+            ):
+                topic = "What If " + topic
+
+            normalized = re.sub(
+                r"[^a-z0-9]+",
+                " ",
+                topic.lower()
+            ).strip()
+
+            duplicate = False
+
+            for old_topic in history:
+
+                old_normalized = re.sub(
+                    r"[^a-z0-9]+",
+                    " ",
+                    str(old_topic).lower()
+                ).strip()
+
+                if normalized == old_normalized:
+                    duplicate = True
+                    break
+
+            if duplicate:
+
+                print(
+                    "Duplicate topic detected."
+                )
+
+                continue
+
             history.append(topic)
 
             history_file.write_text(
                 json.dumps(
-                    history,
+                    history[-1000:],
                     ensure_ascii=False,
                     indent=2
                 ),
                 encoding="utf-8"
             )
 
+            print("")
+            print("======================================")
+            print("NEW UNIQUE TOPIC")
+            print(topic)
+            print("======================================")
+
             return topic
 
-        print("Duplicate topic detected. Generating another...")
+        except Exception as e:
+
+            error_text = str(e)
+            error_upper = error_text.upper()
+
+            print("")
+            print("TOPIC GENERATION ERROR:")
+            print(error_text)
+
+            transient_error = any(
+                code in error_upper
+                for code in [
+                    "500",
+                    "INTERNAL",
+                    "503",
+                    "UNAVAILABLE",
+                    "429",
+                    "RESOURCE_EXHAUSTED",
+                    "502",
+                    "504",
+                    "OVERLOADED",
+                    "HIGH DEMAND",
+                    "RATE LIMIT",
+                    "TEMPORAR"
+                ]
+            )
+
+            if not transient_error:
+                raise
+
+            if attempt >= 5:
+                raise RuntimeError(
+                    "Gemini topic generation failed "
+                    f"after {attempt} attempts: "
+                    f"{error_text}"
+                )
+
+            wait_seconds = 10 * (
+                2 ** (attempt - 1)
+            )
+
+            jitter = random.randint(0, 5)
+
+            total_wait = (
+                wait_seconds + jitter
+            )
+
+            print(
+                "Temporary Gemini error detected."
+            )
+
+            print(
+                f"Retrying in "
+                f"{total_wait} seconds..."
+            )
+
+            import time
+            time.sleep(total_wait)
 
     raise RuntimeError(
-        "Could not generate a unique topic after 5 attempts."
-    )
+        "Could not generate a unique topic "
+        "after 5 attempts."
+        )
 
 def create_story(topic):
 
