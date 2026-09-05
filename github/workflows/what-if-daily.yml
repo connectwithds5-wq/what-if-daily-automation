@@ -37,6 +37,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install FFmpeg
         run: |
@@ -66,12 +67,20 @@ jobs:
         run: |
           python src/what_if_daily.py
 
+      - name: Verify generated files
+        run: |
+          test -f output/what_if_daily.mp4
+          test -f output/metadata.json
+
+          echo "Generated files verified:"
+          ls -lh output/what_if_daily.mp4
+          ls -lh output/metadata.json
+
       - name: Upload to YouTube
         run: |
           python - <<'PY'
           import os
           import json
-          import mimetypes
 
           from google.oauth2.credentials import Credentials
           from googleapiclient.discovery import build
@@ -180,3 +189,13 @@ jobs:
         run: |
           rm -rf output
           echo "Temporary generated files removed."
+
+      - name: Post Setup Python
+        if: always()
+        run: |
+          python --version
+
+      - name: Post Checkout repository
+        if: always()
+        run: |
+          echo "WHAT IF DAILY workflow completed."
