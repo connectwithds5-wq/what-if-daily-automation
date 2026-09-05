@@ -523,11 +523,7 @@ def is_bad_title(title):
     )
 
 
-def score_candidate(
-    item,
-    query,
-    source
-):
+def score_candidate(item, query, source):
 
     title = str(
         item.get(
@@ -554,7 +550,7 @@ def score_candidate(
         ) or 0
     )
 
-    if w < 1200 or h < 700:
+    if w < 1000 or h < 600:
         return -999
 
     if is_bad_title(title):
@@ -562,17 +558,14 @@ def score_candidate(
 
     score = 0
 
-    # -------------------------------------------------
     # IMAGE QUALITY
-    # -------------------------------------------------
-
     megapixels = (
         w * h
     ) / 1_000_000
 
     score += min(
-        35,
-        megapixels * 3
+        40,
+        megapixels * 4
     )
 
     ratio = w / max(
@@ -580,26 +573,22 @@ def score_candidate(
         h
     )
 
-    if 1.15 <= ratio <= 2.2:
-        score += 14
+    if 1.15 <= ratio <= 2.3:
+        score += 12
 
-    # -------------------------------------------------
     # SOURCE QUALITY
-    # -------------------------------------------------
-
     if source == "NASA":
         score += 30
 
     elif source == "Wikimedia Commons":
-        score += 10
+        score += 12
 
-    # -------------------------------------------------
     # QUERY RELEVANCE
-    # -------------------------------------------------
-
-    query_words = re.findall(
-        r"[a-z0-9]{3,}",
-        query_text
+    query_words = set(
+        re.findall(
+            r"[a-z0-9]{3,}",
+            query_text
+        )
     )
 
     title_words = set(
@@ -609,68 +598,61 @@ def score_candidate(
         )
     )
 
-    stop = {
-        "the", "and", "for",
-        "with", "from", "photograph",
-        "photo", "image", "high",
-        "resolution", "nasa",
-        "documentary"
+    ignored = {
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "photo",
+        "photograph",
+        "image",
+        "real",
+        "nasa",
+        "commons",
+        "wikimedia",
+        "high",
+        "resolution"
     }
 
-    relevant_words = [
-        word
-        for word in query_words
-        if word not in stop
-    ]
+    useful = (
+        query_words
+        - ignored
+    )
 
-    matches = sum(
-        1
-        for word in relevant_words
-        if word in title_words
+    matches = len(
+        useful & title_words
     )
 
     score += min(
-        45,
-        matches * 7
+        50,
+        matches * 8
     )
 
-    # -------------------------------------------------
-    # PHOTOGRAPHIC QUALITY
-    # -------------------------------------------------
-
+    # Photographic keywords
     photographic = [
-        "photo",
-        "photograph",
-        "surface",
-        "landscape",
-        "clouds",
-        "aerial",
-        "satellite",
-        "observatory",
         "earth",
+        "moon",
         "planet",
-        "astronaut",
         "space",
+        "astronaut",
         "ocean",
         "volcano",
+        "lava",
+        "cloud",
+        "surface",
+        "landscape",
         "mountain",
         "glacier",
-        "city"
+        "city",
+        "forest",
+        "desert",
+        "satellite"
     ]
 
     score += sum(
         4
         for word in photographic
-        if word in title
-    )
-
-    # -------------------------------------------------
-    # PENALIZE BAD / GENERIC RESULTS
-    # -------------------------------------------------
-
-    score -= sum(
-        15
-        for word in BAD_WORDS
         if word in title
     )
 
@@ -910,23 +892,70 @@ def download_image(source):
 
     try:
 
+        url = source.get("url", "").strip()
+
+        if not url:
+            return None
+
+        print("Downloading image:")
+        print(url)
+
         r = SESSION.get(
-            source["url"],
-            timeout=45
+            url,
+            timeout=45,
+            allow_redirects=True
         )
 
         r.raise_for_status()
 
-        img = Image.open(
-            io.BytesIO(
-                r.content
+        content_type = (
+            r.headers.get(
+                "Content-Type",
+                ""
             )
-        ).convert("RGB")
+            .lower()
+        )
+
+        # Reject HTML pages and other non-image responses.
+        if (
+            "image/" not in content_type
+            and not url.lower().endswith(
+                (
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".webp",
+                    ".tif",
+                    ".tiff"
+                )
+            )
+        ):
+            print(
+                "Rejected non-image response:",
+                content_type
+            )
+            return None
+
+        img = Image.open(
+            io.BytesIO(r.content)
+        )
+
+        img.load()
+
+        img = img.convert("RGB")
+
+        print(
+            f"Downloaded image: "
+            f"{img.width}x{img.height}"
+        )
 
         if (
             img.width < 1000
             or img.height < 600
         ):
+            print(
+                "Rejected image: resolution too low"
+            )
             return None
 
         return img
@@ -939,7 +968,6 @@ def download_image(source):
         )
 
         return None
-
 
 def visual_mode(
     topic,
@@ -1008,137 +1036,253 @@ def visual_mode(
 
 def visual_queries(topic, scene, mode):
 
-    visual = str(
-        scene.get("visual", "")
-    ).strip()
+    visual = safe_ascii(
+        scene.get("visual", ""),
+        500
+    )
 
-    narration = str(
-        scene.get("narration", "")
-    ).strip()
+    narration = safe_ascii(
+        scene.get("narration", ""),
+        500
+    )
 
-    # Combine topic + scene information.
-    combined = (
-        f"{topic}. "
-        f"{visual}. "
+    text = (
+        f"{topic} "
+        f"{visual} "
         f"{narration}"
-    )
-
-    # Remove words that are poor image-search terms.
-    stop_words = {
-        "the", "a", "an", "and", "or",
-        "of", "to", "in", "on", "with",
-        "as", "is", "are", "was", "were",
-        "this", "that", "these", "those",
-        "will", "would", "could", "should",
-        "suddenly", "perhaps", "almost",
-        "very", "extremely", "really",
-        "what", "if", "happens", "happen",
-        "show", "shows", "shown",
-        "scene", "visual", "cinematic",
-        "realistic", "photorealistic",
-        "dramatic", "dramatically",
-        "beautiful", "epic"
-    }
-
-    # Extract useful words from the scene description.
-    words = re.findall(
-        r"[A-Za-z][A-Za-z0-9-]{2,}",
-        combined.lower()
-    )
-
-    keywords = []
-
-    for word in words:
-        if word not in stop_words and word not in keywords:
-            keywords.append(word)
-
-    # Keep search phrases compact.
-    keyword_text = " ".join(
-        keywords[:12]
-    )
+    ).lower()
 
     queries = []
 
-    # Query 1: exact scene.
-    if keyword_text:
+    # --------------------------------------------------
+    # 1. EXACT SCENE SEARCH
+    # --------------------------------------------------
+
+    if visual:
+
         queries.append(
-            f"{keyword_text} photograph NASA"
+            f"{visual} NASA photograph"
         )
 
-    # Query 2: topic + scene.
+        queries.append(
+            f"{visual} real photograph"
+        )
+
+        queries.append(
+            f"{visual} Wikimedia Commons"
+        )
+
+    # --------------------------------------------------
+    # 2. TOPIC + SCENE
+    # --------------------------------------------------
+
     queries.append(
-        f"{safe_ascii(topic, 100)} "
-        f"{safe_ascii(visual, 160)} photograph"
+        f"{safe_ascii(topic, 120)} "
+        f"{visual}"
     )
 
-    # Query 3: documentary/scientific version.
-    if keyword_text:
-        queries.append(
-            f"{keyword_text} "
-            f"documentary photograph"
-        )
+    # --------------------------------------------------
+    # 3. SCIENCE-SPECIFIC SEARCHES
+    # --------------------------------------------------
 
-    # Mode-specific high-quality fallback.
+    if "earth" in text:
+
+        queries.extend([
+            "Earth from space NASA",
+            "Earth atmosphere NASA photograph",
+            "Earth clouds satellite NASA",
+            "Earth horizon space NASA"
+        ])
+
+    if "moon" in text:
+
+        queries.extend([
+            "Moon surface NASA photograph",
+            "Moon Earth from space NASA",
+            "lunar landscape NASA",
+            "Moon horizon NASA"
+        ])
+
+    if (
+        "ocean" in text
+        or "sea" in text
+        or "underwater" in text
+    ):
+
+        queries.extend([
+            "ocean aerial photograph",
+            "deep ocean underwater photograph",
+            "ocean satellite NASA",
+            "sea waves aerial photograph"
+        ])
+
+    if (
+        "volcano" in text
+        or "lava" in text
+    ):
+
+        queries.extend([
+            "volcano eruption NASA",
+            "volcano lava photograph",
+            "volcano plume satellite NASA",
+            "active volcano aerial photograph"
+        ])
+
+    if (
+        "ice" in text
+        or "frozen" in text
+        or "glacier" in text
+        or "antarctica" in text
+    ):
+
+        queries.extend([
+            "Antarctica NASA photograph",
+            "glacier aerial photograph",
+            "polar ice NASA",
+            "frozen landscape photograph"
+        ])
+
+    if (
+        "mars" in text
+    ):
+
+        queries.extend([
+            "Mars surface NASA",
+            "Mars landscape NASA",
+            "Mars rover photograph",
+            "Mars planet NASA"
+        ])
+
+    if (
+        "sun" in text
+        or "solar" in text
+    ):
+
+        queries.extend([
+            "Sun NASA photograph",
+            "solar flare NASA",
+            "solar surface NASA",
+            "Sun from space NASA"
+        ])
+
+    if (
+        "astronaut" in text
+        or "spacewalk" in text
+    ):
+
+        queries.extend([
+            "astronaut spacewalk NASA",
+            "astronaut Earth background NASA",
+            "space station astronaut NASA",
+            "extravehicular activity NASA"
+        ])
+
+    if (
+        "city" in text
+        or "cities" in text
+        or "urban" in text
+    ):
+
+        queries.extend([
+            "city skyline aerial photograph",
+            "city street documentary photograph",
+            "city night aerial photograph",
+            "urban landscape photograph"
+        ])
+
+    if (
+        "desert" in text
+        or "sahara" in text
+    ):
+
+        queries.extend([
+            "Sahara desert NASA",
+            "Sahara aerial photograph",
+            "desert landscape photograph",
+            "desert satellite NASA"
+        ])
+
+    if (
+        "forest" in text
+        or "jungle" in text
+    ):
+
+        queries.extend([
+            "forest aerial photograph",
+            "forest landscape photograph",
+            "forest satellite NASA",
+            "dense jungle photograph"
+        ])
+
+    if (
+        "dinosaur" in text
+        or "prehistoric" in text
+    ):
+
+        queries.extend([
+            "dinosaur fossil photograph",
+            "dinosaur skeleton museum photograph",
+            "prehistoric fossil photograph",
+            "natural history museum dinosaur"
+        ])
+
+    # --------------------------------------------------
+    # 4. MODE FALLBACK
+    # --------------------------------------------------
+
     mode_queries = {
 
         "rings": [
-            "Earth from space high resolution NASA",
-            "Earth atmospheric limb NASA",
-            "Earth planet full disk NASA"
+            "Earth full disk NASA",
+            "Earth from space NASA",
+            "Earth atmosphere NASA"
         ],
 
         "earth": [
-            "Earth from space high resolution NASA",
-            "Earth atmosphere limb NASA",
-            "Earth clouds satellite NASA"
+            "Earth full disk NASA",
+            "Earth clouds NASA",
+            "Earth horizon NASA"
         ],
 
         "moon": [
-            "Moon surface high resolution NASA",
-            "Moon Earth from space NASA",
-            "lunar landscape photograph NASA"
+            "Moon surface NASA",
+            "Moon Earth NASA",
+            "lunar landscape NASA"
         ],
 
         "volcano": [
-            "volcano eruption aerial photograph",
-            "lava eruption volcano photograph",
-            "volcano plume satellite NASA"
+            "volcano eruption photograph",
+            "lava eruption photograph"
         ],
 
         "ocean": [
             "ocean aerial photograph",
-            "deep ocean underwater photograph",
-            "ocean storm satellite NASA"
+            "ocean satellite NASA"
         ],
 
         "ice": [
-            "Antarctica ice satellite NASA",
-            "glacier aerial photograph",
-            "polar ice landscape photograph"
+            "Antarctica NASA",
+            "glacier photograph"
         ],
 
         "sun": [
-            "Sun surface NASA",
-            "solar flare NASA",
-            "Sun from space NASA"
+            "Sun NASA",
+            "solar flare NASA"
         ],
 
         "mars": [
-            "Mars surface NASA",
-            "Mars landscape NASA",
-            "Mars planet from space NASA"
+            "Mars NASA",
+            "Mars surface NASA"
         ],
 
         "city": [
-            "modern city skyline aerial photograph",
-            "city at night aerial photograph",
-            "city street documentary photograph"
+            "city skyline photograph",
+            "city aerial photograph"
         ],
 
         "space": [
-            "deep space stars NASA",
-            "Earth from space NASA",
-            "astronaut Earth space NASA"
+            "deep space NASA",
+            "Earth from space NASA"
         ]
     }
 
@@ -1149,83 +1293,11 @@ def visual_queries(topic, scene, mode):
         )
     )
 
-    # Special topic-specific searches.
-    text = combined.lower()
+    # --------------------------------------------------
+    # REMOVE DUPLICATES
+    # --------------------------------------------------
 
-    if "astronaut" in text or "spacewalk" in text:
-        queries.extend([
-            "astronaut spacewalk NASA photograph",
-            "astronaut Earth background NASA",
-            "extravehicular activity astronaut photograph"
-        ])
-
-    if (
-        "city" in text
-        or "cities" in text
-        or "urban" in text
-    ):
-        queries.extend([
-            "city skyline aerial photograph",
-            "urban streets documentary photograph",
-            "city night aerial photograph"
-        ])
-
-    if (
-        "human" in text
-        or "people" in text
-        or "person" in text
-    ):
-        queries.extend([
-            "people documentary photograph",
-            "human environment photograph",
-            "human survival documentary photograph"
-        ])
-
-    if (
-        "forest" in text
-        or "jungle" in text
-        or "tree" in text
-    ):
-        queries.extend([
-            "forest aerial photograph",
-            "dense forest landscape photograph",
-            "forest satellite NASA"
-        ])
-
-    if (
-        "desert" in text
-        or "sahara" in text
-    ):
-        queries.extend([
-            "Sahara desert aerial photograph",
-            "desert landscape photograph",
-            "desert satellite NASA"
-        ])
-
-    if (
-        "dinosaur" in text
-        or "prehistoric" in text
-    ):
-        queries.extend([
-            "dinosaur fossil museum photograph",
-            "dinosaur skeleton fossil photograph",
-            "prehistoric fossil photograph"
-        ])
-
-    if (
-        "ice age" in text
-        or "glacier" in text
-        or "frozen" in text
-    ):
-        queries.extend([
-            "glacier aerial photograph",
-            "Antarctica ice landscape NASA",
-            "frozen landscape documentary photograph"
-        ])
-
-    # Remove duplicates while preserving order.
     final_queries = []
-
     seen = set()
 
     for q in queries:
@@ -1242,10 +1314,17 @@ def visual_queries(topic, scene, mode):
         key = q.lower()
 
         if key not in seen:
+
             seen.add(key)
             final_queries.append(q)
 
-    return final_queries[:12]
+    print("")
+    print("IMAGE SEARCH QUERIES:")
+
+    for q in final_queries[:15]:
+        print(" -", q)
+
+    return final_queries[:15]
 
 
 def add_ring_overlay(
@@ -1330,48 +1409,31 @@ def find_best_image(
         mode
     )
 
-    print("")
-    print(
-        f"Visual search for scene: "
-        f"{scene.get('on_screen', '')}"
-    )
-
     for q in queries:
 
+        print("")
         print(
-            "IMAGE QUERY:",
+            "Searching:",
             q
         )
 
-        # NASA is especially useful for
-        # scientific / space / Earth subjects.
-        if mode in (
-            "rings",
-            "earth",
-            "moon",
-            "sun",
-            "mars",
-            "volcano",
-            "ice",
-            "ocean",
-            "space"
-        ):
+        # NASA
+        nasa_results = nasa_search(
+            q,
+            10
+        )
 
-            nasa_results = nasa_search(
-                q,
-                8
-            )
+        for item in nasa_results:
+            item["_query"] = q
 
-            for item in nasa_results:
-                item["_query"] = q
+        candidates.extend(
+            nasa_results
+        )
 
-            candidates.extend(
-                nasa_results
-            )
-
+        # Wikimedia
         wiki_results = wikimedia_search(
             q,
-            8
+            10
         )
 
         for item in wiki_results:
@@ -1381,14 +1443,9 @@ def find_best_image(
             wiki_results
         )
 
-    # -------------------------------------------------
-    # REMOVE DUPLICATE URLs
-    # -------------------------------------------------
-
-    unique_candidates = []
-
-    candidate_urls = set()
-
+    # Remove duplicate URLs
+    unique = {}
+    
     for item in candidates:
 
         url = item.get(
@@ -1399,24 +1456,25 @@ def find_best_image(
         if not url:
             continue
 
-        if url in candidate_urls:
-            continue
-
         if url in used_urls:
             continue
 
-        candidate_urls.add(url)
+        if url not in unique:
+            unique[url] = item
 
-        unique_candidates.append(
-            item
-        )
+    candidates = list(
+        unique.values()
+    )
 
-    # -------------------------------------------------
-    # SMART RELEVANCE RANKING
-    # -------------------------------------------------
+    print(
+        f"Found {len(candidates)} "
+        "unique image candidates."
+    )
 
+    # IMPORTANT:
+    # Score using the ACTUAL search query.
     ranked = sorted(
-        unique_candidates,
+        candidates,
         key=lambda item:
             score_candidate(
                 item,
@@ -1432,59 +1490,93 @@ def find_best_image(
         reverse=True
     )
 
-    # -------------------------------------------------
-    # TRY BEST IMAGES FIRST
-    # -------------------------------------------------
-
-    for item in ranked:
-
-        if item.get("url") in used_urls:
-            continue
+    # Try best candidates
+    for rank, item in enumerate(
+        ranked[:40],
+        start=1
+    ):
 
         print(
-            "Trying image:",
-            item.get("title", "")
+            f"IMAGE CANDIDATE {rank}: "
+            f"{item.get('title', '')}"
         )
 
         img = download_image(
             item
         )
 
-        if img is not None:
+        if img is None:
+            continue
 
-            print(
-                "SELECTED IMAGE:",
-                item.get("title", "")
+        print(
+            "SELECTED IMAGE:",
+            item.get(
+                "title",
+                ""
             )
+        )
 
-            return img, item
+        print(
+            "SOURCE:",
+            item.get(
+                "source",
+                ""
+            )
+        )
 
-    print(
-        "No suitable topic-matched image found."
-    )
+        print(
+            "QUERY:",
+            item.get(
+                "_query",
+                ""
+            )
+        )
+
+        return img, item
 
     return None, None
 
+def create_realistic_scene(topic, scene, index, used_urls):
+    """
+    Create one cinematic 9:16 scene using ONLY a real,
+    topic-matched NASA/Wikimedia image.
 
-def create_realistic_scene(
-    topic,
-    scene,
-    index,
-    used_urls
-):
+    IMPORTANT:
+    - No generated/emergency background.
+    - No random star background.
+    - If a suitable real image cannot be found, STOP the video.
+    - Every scene must use a different image URL whenever possible.
+    """
 
+    # ---------------------------------------------------------
+    # Deterministic seed for consistent cinematic movement
+    # ---------------------------------------------------------
     seed = int(
         hashlib.sha256(
-            f"{topic}:{index}".encode()
+            f"{topic}:{index}".encode("utf-8")
         ).hexdigest()[:8],
         16
     )
 
-    mode = visual_mode(
-        topic,
-        scene
-    )
+    random.seed(seed)
 
+    # ---------------------------------------------------------
+    # Decide visual category
+    # ---------------------------------------------------------
+    mode = visual_mode(topic, scene)
+
+    print()
+    print("=" * 70)
+    print(f"SCENE {index + 1}/{SCENES}")
+    print(f"TOPIC : {topic}")
+    print(f"MODE  : {mode}")
+    print(f"VISUAL: {scene.get('visual', '')}")
+    print(f"NARR  : {scene.get('narration', '')}")
+    print("=" * 70)
+
+    # ---------------------------------------------------------
+    # Find REAL topic-matched image
+    # ---------------------------------------------------------
     img, source = find_best_image(
         topic,
         scene,
@@ -1492,85 +1584,95 @@ def create_realistic_scene(
         used_urls
     )
 
+    # ---------------------------------------------------------
+    # NEVER generate a fake fallback image
+    # ---------------------------------------------------------
     if img is None:
-
-        print(
-            f"Scene {index+1}: "
-            "no external photo found; "
-            "using cinematic emergency background"
+        raise RuntimeError(
+            f"\n"
+            f"SCENE {index + 1}: NO REAL TOPIC-MATCHED IMAGE FOUND.\n"
+            f"Topic : {topic}\n"
+            f"Visual: {scene.get('visual', '')}\n"
+            f"Mode  : {mode}\n"
+            f"\n"
+            f"Video generation stopped intentionally.\n"
+            f"Please improve the image search/query logic instead of "
+            f"publishing an unrelated background."
         )
 
-        img = Image.new(
-            "RGB",
-            (WIDTH, HEIGHT),
-            (6, 10, 20)
+    # ---------------------------------------------------------
+    # Validate source
+    # ---------------------------------------------------------
+    if not source:
+        raise RuntimeError(
+            f"Scene {index + 1}: image downloaded but source metadata is missing."
         )
 
-        d = ImageDraw.Draw(img)
+    source_url = str(source.get("url", "")).strip()
 
-        random.seed(seed)
-
-        for _ in range(280):
-
-            x = random.randrange(WIDTH)
-            y = random.randrange(HEIGHT)
-
-            r = random.choice(
-                [1, 1, 1, 2]
-            )
-
-            d.ellipse(
-                (
-                    x - r,
-                    y - r,
-                    x + r,
-                    y + r
-                ),
-                fill=(
-                    190,
-                    200,
-                    220
-                )
-            )
-
-        source = {
-            "title":
-                "Emergency generated background",
-            "license":
-                "N/A",
-            "url":
-                "",
-            "source":
-                "generated"
-        }
-
-    else:
-
-        used_urls.add(
-            source.get(
-                "url",
-                ""
-            )
+    if not source_url:
+        raise RuntimeError(
+            f"Scene {index + 1}: image source URL is missing."
         )
 
-    focus_x = (
-        0.42
-        + ((index % 3) - 1) * .08
-    )
+    # Prevent duplicate images between scenes
+    if source_url in used_urls:
+        raise RuntimeError(
+            f"Scene {index + 1}: duplicate image selected:\n"
+            f"{source_url}"
+        )
 
-    focus_y = (
-        0.50
-        + ((index % 2) * .04)
-    )
+    used_urls.add(source_url)
 
+    print()
+    print("REAL IMAGE SELECTED")
+    print("Source :", source.get("source", "Unknown"))
+    print("Title  :", source.get("title", "Unknown"))
+    print("URL    :", source_url)
+    print("License:", source.get("license", "Unknown"))
+    print()
+
+    # ---------------------------------------------------------
+    # Validate downloaded image
+    # ---------------------------------------------------------
+    if img.width < 1000 or img.height < 600:
+        raise RuntimeError(
+            f"Scene {index + 1}: selected image resolution is too low: "
+            f"{img.width}x{img.height}"
+        )
+
+    # ---------------------------------------------------------
+    # Cinematic focus position
+    #
+    # Slightly different framing per scene prevents the
+    # Shorts video from looking like repeated static photos.
+    # ---------------------------------------------------------
+    focus_positions = [
+        (0.40, 0.48),
+        (0.58, 0.50),
+        (0.45, 0.42),
+        (0.55, 0.58),
+        (0.38, 0.52),
+        (0.62, 0.46),
+        (0.48, 0.55),
+        (0.52, 0.48),
+    ]
+
+    focus_x, focus_y = focus_positions[
+        index % len(focus_positions)
+    ]
+
+    # ---------------------------------------------------------
+    # Convert real image into 1080x1920 cinematic frame
+    # ---------------------------------------------------------
     canvas = fit_crop(
         img,
-        focus=(
-            focus_x,
-            focus_y
-        )
+        focus=(focus_x, focus_y)
     )
 
+    # ---------------------------------------------------------
+    # Cinematic visual treatment
+    # ---------------------------------------------------------
     canvas = add_ring_overlay(
         canvas,
         seed,
@@ -1588,6 +1690,12 @@ def create_realistic_scene(
         mode
     )
 
+    # ---------------------------------------------------------
+    # Dark readability gradients
+    #
+    # Keeps text readable while preserving most of the
+    # original photograph.
+    # ---------------------------------------------------------
     grad = Image.new(
         "RGBA",
         (WIDTH, HEIGHT),
@@ -1596,64 +1704,28 @@ def create_realistic_scene(
 
     gd = ImageDraw.Draw(grad)
 
-    for i in range(
-        0,
-        430,
-        10
-    ):
-
-        a = int(
-            115 * (
-                1 - i / 430
-            )
+    # Top gradient
+    for i in range(0, 430, 10):
+        alpha = int(
+            115 * (1 - i / 430)
         )
 
         gd.rectangle(
-            (
-                0,
-                i,
-                WIDTH,
-                i + 10
-            ),
-            fill=(
-                0,
-                0,
-                0,
-                a
-            )
+            (0, i, WIDTH, i + 10),
+            fill=(0, 0, 0, alpha)
         )
 
-    for i in range(
-        0,
-        420,
-        10
-    ):
-
-        a = int(
-            105 * (
-                1 - i / 420
-            )
+    # Bottom gradient
+    for i in range(0, 420, 10):
+        alpha = int(
+            105 * (1 - i / 420)
         )
 
-        y = (
-            HEIGHT
-            - i
-            - 10
-        )
+        y = HEIGHT - i - 10
 
         gd.rectangle(
-            (
-                0,
-                y,
-                WIDTH,
-                y + 10
-            ),
-            fill=(
-                0,
-                0,
-                0,
-                a
-            )
+            (0, y, WIDTH, y + 10),
+            fill=(0, 0, 0, alpha)
         )
 
     canvas = Image.alpha_composite(
@@ -1661,16 +1733,15 @@ def create_realistic_scene(
         grad
     ).convert("RGB")
 
+    # ---------------------------------------------------------
+    # On-screen text
+    # ---------------------------------------------------------
     on_screen = safe_ascii(
-        scene.get(
-            "on_screen",
-            ""
-        ),
+        scene.get("on_screen", ""),
         100
     )
 
     if on_screen:
-
         font = get_font(
             60,
             bold=True
@@ -1694,19 +1765,15 @@ def create_realistic_scene(
                 font=font
             )
 
+            text_width = box[2] - box[0]
+
             x = (
-                WIDTH
-                - (
-                    box[2]
-                    - box[0]
-                )
+                WIDTH - text_width
             ) // 2
 
+            # Shadow
             d.text(
-                (
-                    x + 3,
-                    y + 3
-                ),
+                (x + 3, y + 3),
                 line,
                 font=font,
                 fill=(0, 0, 0),
@@ -1714,11 +1781,9 @@ def create_realistic_scene(
                 stroke_fill=(0, 0, 0)
             )
 
+            # Main text
             d.text(
-                (
-                    x,
-                    y
-                ),
+                (x, y),
                 line,
                 font=font,
                 fill=(255, 255, 255),
@@ -1728,18 +1793,16 @@ def create_realistic_scene(
 
             y += 76
 
+    # ---------------------------------------------------------
+    # Channel watermark
+    # ---------------------------------------------------------
     wm = get_font(
         27,
         bold=True
     )
 
-    ImageDraw.Draw(
-        canvas
-    ).text(
-        (
-            42,
-            HEIGHT - 72
-        ),
+    ImageDraw.Draw(canvas).text(
+        (42, HEIGHT - 72),
         "WHAT IF DAILY",
         font=wm,
         fill=(255, 255, 255),
@@ -1747,15 +1810,25 @@ def create_realistic_scene(
         stroke_fill=(0, 0, 0)
     )
 
-    path = (
-        FRAMES
-        / f"scene_{index:02d}.png"
-    )
+    # ---------------------------------------------------------
+    # Save final scene frame
+    # ---------------------------------------------------------
+    path = FRAMES / f"scene_{index:02d}.png"
 
     canvas.save(
         path,
         format="PNG",
         optimize=True
+    )
+
+    print(
+        f"Scene {index + 1} frame saved: "
+        f"{path}"
+    )
+
+    print(
+        f"Scene {index + 1} image source: "
+        f"{source.get('source', 'Unknown')}"
     )
 
     return {
