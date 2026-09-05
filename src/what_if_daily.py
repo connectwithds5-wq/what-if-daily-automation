@@ -536,6 +536,10 @@ def score_candidate(
         )
     ).lower()
 
+    query_text = str(
+        query or ""
+    ).lower()
+
     w = int(
         item.get(
             "width",
@@ -558,15 +562,17 @@ def score_candidate(
 
     score = 0
 
+    # -------------------------------------------------
+    # IMAGE QUALITY
+    # -------------------------------------------------
+
+    megapixels = (
+        w * h
+    ) / 1_000_000
+
     score += min(
-        40,
-        math.log(
-            max(
-                1,
-                w * h
-            ),
-            10
-        ) * 4
+        35,
+        megapixels * 3
     )
 
     ratio = w / max(
@@ -577,8 +583,60 @@ def score_candidate(
     if 1.15 <= ratio <= 2.2:
         score += 14
 
+    # -------------------------------------------------
+    # SOURCE QUALITY
+    # -------------------------------------------------
+
     if source == "NASA":
-        score += 25
+        score += 30
+
+    elif source == "Wikimedia Commons":
+        score += 10
+
+    # -------------------------------------------------
+    # QUERY RELEVANCE
+    # -------------------------------------------------
+
+    query_words = re.findall(
+        r"[a-z0-9]{3,}",
+        query_text
+    )
+
+    title_words = set(
+        re.findall(
+            r"[a-z0-9]{3,}",
+            title
+        )
+    )
+
+    stop = {
+        "the", "and", "for",
+        "with", "from", "photograph",
+        "photo", "image", "high",
+        "resolution", "nasa",
+        "documentary"
+    }
+
+    relevant_words = [
+        word
+        for word in query_words
+        if word not in stop
+    ]
+
+    matches = sum(
+        1
+        for word in relevant_words
+        if word in title_words
+    )
+
+    score += min(
+        45,
+        matches * 7
+    )
+
+    # -------------------------------------------------
+    # PHOTOGRAPHIC QUALITY
+    # -------------------------------------------------
 
     photographic = [
         "photo",
@@ -589,7 +647,15 @@ def score_candidate(
         "aerial",
         "satellite",
         "observatory",
-        "image"
+        "earth",
+        "planet",
+        "astronaut",
+        "space",
+        "ocean",
+        "volcano",
+        "mountain",
+        "glacier",
+        "city"
     ]
 
     score += sum(
@@ -597,6 +663,10 @@ def score_candidate(
         for word in photographic
         if word in title
     )
+
+    # -------------------------------------------------
+    # PENALIZE BAD / GENERIC RESULTS
+    # -------------------------------------------------
 
     score -= sum(
         15
@@ -936,116 +1006,246 @@ def visual_mode(
     return "space"
 
 
-def visual_queries(
-    topic,
-    scene,
-    mode
-):
+def visual_queries(topic, scene, mode):
 
-    text = (
-        f"{topic} "
-        f"{scene.get('visual', '')}"
-    ).lower()
+    visual = str(
+        scene.get("visual", "")
+    ).strip()
 
-    if mode == "rings":
+    narration = str(
+        scene.get("narration", "")
+    ).strip()
 
-        return [
-            "Earth full disk clouds space",
-            "Earth from space blue planet",
-            "Earth limb atmosphere space"
-        ]
+    # Combine topic + scene information.
+    combined = (
+        f"{topic}. "
+        f"{visual}. "
+        f"{narration}"
+    )
 
-    if mode == "moon":
+    # Remove words that are poor image-search terms.
+    stop_words = {
+        "the", "a", "an", "and", "or",
+        "of", "to", "in", "on", "with",
+        "as", "is", "are", "was", "were",
+        "this", "that", "these", "those",
+        "will", "would", "could", "should",
+        "suddenly", "perhaps", "almost",
+        "very", "extremely", "really",
+        "what", "if", "happens", "happen",
+        "show", "shows", "shown",
+        "scene", "visual", "cinematic",
+        "realistic", "photorealistic",
+        "dramatic", "dramatically",
+        "beautiful", "epic"
+    }
 
-        return [
+    # Extract useful words from the scene description.
+    words = re.findall(
+        r"[A-Za-z][A-Za-z0-9-]{2,}",
+        combined.lower()
+    )
+
+    keywords = []
+
+    for word in words:
+        if word not in stop_words and word not in keywords:
+            keywords.append(word)
+
+    # Keep search phrases compact.
+    keyword_text = " ".join(
+        keywords[:12]
+    )
+
+    queries = []
+
+    # Query 1: exact scene.
+    if keyword_text:
+        queries.append(
+            f"{keyword_text} photograph NASA"
+        )
+
+    # Query 2: topic + scene.
+    queries.append(
+        f"{safe_ascii(topic, 100)} "
+        f"{safe_ascii(visual, 160)} photograph"
+    )
+
+    # Query 3: documentary/scientific version.
+    if keyword_text:
+        queries.append(
+            f"{keyword_text} "
+            f"documentary photograph"
+        )
+
+    # Mode-specific high-quality fallback.
+    mode_queries = {
+
+        "rings": [
+            "Earth from space high resolution NASA",
+            "Earth atmospheric limb NASA",
+            "Earth planet full disk NASA"
+        ],
+
+        "earth": [
+            "Earth from space high resolution NASA",
+            "Earth atmosphere limb NASA",
+            "Earth clouds satellite NASA"
+        ],
+
+        "moon": [
             "Moon surface high resolution NASA",
-            "Moon from space Earth NASA",
-            "lunar landscape high resolution"
-        ]
+            "Moon Earth from space NASA",
+            "lunar landscape photograph NASA"
+        ],
 
-    if mode == "volcano":
-
-        return [
+        "volcano": [
             "volcano eruption aerial photograph",
             "lava eruption volcano photograph",
             "volcano plume satellite NASA"
-        ]
+        ],
 
-    if mode == "ocean":
-
-        return [
-            "ocean aerial photograph waves",
+        "ocean": [
+            "ocean aerial photograph",
             "deep ocean underwater photograph",
             "ocean storm satellite NASA"
-        ]
+        ],
 
-    if mode == "ice":
-
-        return [
+        "ice": [
             "Antarctica ice satellite NASA",
             "glacier aerial photograph",
             "polar ice landscape photograph"
-        ]
+        ],
 
-    if mode == "sun":
-
-        return [
+        "sun": [
             "Sun surface NASA",
             "solar flare NASA",
-            "Sun space photograph NASA"
-        ]
+            "Sun from space NASA"
+        ],
 
-    if mode == "mars":
-
-        return [
+        "mars": [
             "Mars surface NASA",
             "Mars landscape NASA",
-            "Mars planet space NASA"
-        ]
+            "Mars planet from space NASA"
+        ],
 
-    if mode == "city":
-
-        return [
+        "city": [
             "modern city skyline aerial photograph",
             "city at night aerial photograph",
-            "crowded city street photograph"
-        ]
+            "city street documentary photograph"
+        ],
 
-    if "dinosaur" in text:
-
-        return [
-            "dinosaur fossil museum photograph",
-            "dinosaur skeleton fossil photograph",
-            "natural history museum dinosaur"
+        "space": [
+            "deep space stars NASA",
+            "Earth from space NASA",
+            "astronaut Earth space NASA"
         ]
+    }
+
+    queries.extend(
+        mode_queries.get(
+            mode,
+            []
+        )
+    )
+
+    # Special topic-specific searches.
+    text = combined.lower()
+
+    if "astronaut" in text or "spacewalk" in text:
+        queries.extend([
+            "astronaut spacewalk NASA photograph",
+            "astronaut Earth background NASA",
+            "extravehicular activity astronaut photograph"
+        ])
+
+    if (
+        "city" in text
+        or "cities" in text
+        or "urban" in text
+    ):
+        queries.extend([
+            "city skyline aerial photograph",
+            "urban streets documentary photograph",
+            "city night aerial photograph"
+        ])
+
+    if (
+        "human" in text
+        or "people" in text
+        or "person" in text
+    ):
+        queries.extend([
+            "people documentary photograph",
+            "human environment photograph",
+            "human survival documentary photograph"
+        ])
+
+    if (
+        "forest" in text
+        or "jungle" in text
+        or "tree" in text
+    ):
+        queries.extend([
+            "forest aerial photograph",
+            "dense forest landscape photograph",
+            "forest satellite NASA"
+        ])
 
     if (
         "desert" in text
         or "sahara" in text
     ):
-
-        return [
+        queries.extend([
             "Sahara desert aerial photograph",
-            "Sahara landscape photograph",
+            "desert landscape photograph",
             "desert satellite NASA"
-        ]
+        ])
 
     if (
-        "earth" in text
-        or "planet" in text
+        "dinosaur" in text
+        or "prehistoric" in text
     ):
+        queries.extend([
+            "dinosaur fossil museum photograph",
+            "dinosaur skeleton fossil photograph",
+            "prehistoric fossil photograph"
+        ])
 
-        return [
-            "Earth full disk NASA",
-            "Earth clouds from space NASA",
-            "Earth atmosphere limb NASA"
-        ]
+    if (
+        "ice age" in text
+        or "glacier" in text
+        or "frozen" in text
+    ):
+        queries.extend([
+            "glacier aerial photograph",
+            "Antarctica ice landscape NASA",
+            "frozen landscape documentary photograph"
+        ])
 
-    return [
-        "deep space stars NASA",
-        "Earth from space NASA",
-        "planet Earth clouds NASA"
-    ]
+    # Remove duplicates while preserving order.
+    final_queries = []
+
+    seen = set()
+
+    for q in queries:
+
+        q = re.sub(
+            r"\s+",
+            " ",
+            q
+        ).strip()
+
+        if not q:
+            continue
+
+        key = q.lower()
+
+        if key not in seen:
+            seen.add(key)
+            final_queries.append(q)
+
+    return final_queries[:12]
 
 
 def add_ring_overlay(
@@ -1124,12 +1324,27 @@ def find_best_image(
 
     candidates = []
 
-    for q in visual_queries(
+    queries = visual_queries(
         topic,
         scene,
         mode
-    ):
+    )
 
+    print("")
+    print(
+        f"Visual search for scene: "
+        f"{scene.get('on_screen', '')}"
+    )
+
+    for q in queries:
+
+        print(
+            "IMAGE QUERY:",
+            q
+        )
+
+        # NASA is especially useful for
+        # scientific / space / Earth subjects.
         if mode in (
             "rings",
             "earth",
@@ -1142,43 +1357,111 @@ def find_best_image(
             "space"
         ):
 
-            candidates.extend(
-                nasa_search(
-                    q,
-                    10
-                )
+            nasa_results = nasa_search(
+                q,
+                8
             )
 
-        candidates.extend(
-            wikimedia_search(
-                q,
-                10
+            for item in nasa_results:
+                item["_query"] = q
+
+            candidates.extend(
+                nasa_results
             )
+
+        wiki_results = wikimedia_search(
+            q,
+            8
         )
 
+        for item in wiki_results:
+            item["_query"] = q
+
+        candidates.extend(
+            wiki_results
+        )
+
+    # -------------------------------------------------
+    # REMOVE DUPLICATE URLs
+    # -------------------------------------------------
+
+    unique_candidates = []
+
+    candidate_urls = set()
+
+    for item in candidates:
+
+        url = item.get(
+            "url",
+            ""
+        )
+
+        if not url:
+            continue
+
+        if url in candidate_urls:
+            continue
+
+        if url in used_urls:
+            continue
+
+        candidate_urls.add(url)
+
+        unique_candidates.append(
+            item
+        )
+
+    # -------------------------------------------------
+    # SMART RELEVANCE RANKING
+    # -------------------------------------------------
+
     ranked = sorted(
-        candidates,
-        key=lambda x:
+        unique_candidates,
+        key=lambda item:
             score_candidate(
-                x,
-                "",
-                x.get(
+                item,
+                item.get(
+                    "_query",
+                    ""
+                ),
+                item.get(
                     "source",
-                    "Wikimedia"
+                    "Wikimedia Commons"
                 )
             ),
         reverse=True
     )
+
+    # -------------------------------------------------
+    # TRY BEST IMAGES FIRST
+    # -------------------------------------------------
 
     for item in ranked:
 
         if item.get("url") in used_urls:
             continue
 
-        img = download_image(item)
+        print(
+            "Trying image:",
+            item.get("title", "")
+        )
+
+        img = download_image(
+            item
+        )
 
         if img is not None:
+
+            print(
+                "SELECTED IMAGE:",
+                item.get("title", "")
+            )
+
             return img, item
+
+    print(
+        "No suitable topic-matched image found."
+    )
 
     return None, None
 
