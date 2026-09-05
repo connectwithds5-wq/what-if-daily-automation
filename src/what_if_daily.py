@@ -781,141 +781,208 @@ def nasa_search(
         return []
 
 
+
 def wikimedia_search(
     query,
-    limit=12
+    limit=8
 ):
+    """
+    Search Wikimedia Commons safely.
 
-    try:
+    Includes:
+    - rate-limit protection
+    - retry for HTTP 429
+    - real-photo filtering
+    - high-resolution filtering
+    """
 
-        params = {
-            "action": "query",
-            "generator": "search",
-            "gsrsearch":
-                f"filetype:bitmap {query}",
-            "gsrnamespace": 6,
-            "gsrlimit": limit,
-            "prop": "imageinfo",
-            "iiprop":
-                "url|size|extmetadata",
-            "format": "json"
-        }
+    for attempt in range(3):
 
-        r = SESSION.get(
-            WIKIMEDIA_API,
-            params=params,
-            timeout=30
-        )
+        try:
 
-        r.raise_for_status()
+            # -------------------------------------------------
+            # Small delay to avoid Wikimedia rate limiting
+            # -------------------------------------------------
 
-        pages = list(
-            r.json()
-            .get(
-                "query",
-                {}
+            delay = 1.5 + random.uniform(
+                0.5,
+                1.5
             )
-            .get(
-                "pages",
-                {}
+
+            time.sleep(delay)
+
+            params = {
+                "action": "query",
+                "generator": "search",
+                "gsrsearch":
+                    f"filetype:bitmap {query}",
+                "gsrnamespace": 6,
+                "gsrlimit": limit,
+                "prop": "imageinfo",
+                "iiprop":
+                    "url|size|extmetadata",
+                "format": "json"
+            }
+
+            r = SESSION.get(
+                WIKIMEDIA_API,
+                params=params,
+                timeout=30
             )
-            .values()
-        )
 
-        out = []
+            # -------------------------------------------------
+            # RATE LIMIT
+            # -------------------------------------------------
 
-        for p in pages:
+            if r.status_code == 429:
 
-            info = (
-                p.get(
-                    "imageinfo"
+                wait = 5 * (
+                    attempt + 1
                 )
-                or [{}]
-            )[0]
 
-            url = info.get(
-                "url"
-            )
+                print(
+                    f"Wikimedia rate limited "
+                    f"(429). Waiting {wait}s..."
+                )
 
-            w = int(
-                info.get(
-                    "width",
-                    0
-                ) or 0
-            )
+                time.sleep(wait)
 
-            h = int(
-                info.get(
-                    "height",
-                    0
-                ) or 0
-            )
-
-            title = p.get(
-                "title",
-                ""
-            )
-
-            if (
-                not url
-                or w < 1200
-                or h < 700
-                or is_bad_title(title)
-            ):
                 continue
 
-            meta = info.get(
-                "extmetadata"
-            ) or {}
+            r.raise_for_status()
 
-            license_name = str(
-                (
-                    meta.get(
-                        "LicenseShortName"
-                    )
-                    or {}
+            data = r.json()
+
+            pages = list(
+                data.get(
+                    "query",
+                    {}
                 ).get(
-                    "value",
-                    "Unknown"
-                )
+                    "pages",
+                    {}
+                ).values()
             )
 
-            out.append({
-                "url": url,
-                "width": w,
-                "height": h,
-                "title": title,
-                "license":
-                    re.sub(
-                        "<[^>]+>",
-                        "",
-                        license_name
+            out = []
+
+            for p in pages:
+
+                info = (
+                    p.get(
+                        "imageinfo"
+                    )
+                    or [{}]
+                )[0]
+
+                url = info.get(
+                    "url"
+                )
+
+                w = int(
+                    info.get(
+                        "width",
+                        0
+                    ) or 0
+                )
+
+                h = int(
+                    info.get(
+                        "height",
+                        0
+                    ) or 0
+                )
+
+                title = p.get(
+                    "title",
+                    ""
+                )
+
+                # -------------------------------------------------
+                # Reject weak images
+                # -------------------------------------------------
+
+                if (
+                    not url
+                    or w < 1200
+                    or h < 700
+                    or is_bad_title(title)
+                ):
+                    continue
+
+                meta = (
+                    info.get(
+                        "extmetadata"
+                    )
+                    or {}
+                )
+
+                license_name = str(
+                    (
+                        meta.get(
+                            "LicenseShortName"
+                        )
+                        or {}
+                    ).get(
+                        "value",
+                        "Unknown"
+                    )
+                )
+
+                out.append({
+                    "url": url,
+                    "width": w,
+                    "height": h,
+                    "title": title,
+                    "license":
+                        re.sub(
+                            r"<[^>]+>",
+                            "",
+                            license_name
+                        ),
+                    "source":
+                        "Wikimedia Commons"
+                })
+
+            # -------------------------------------------------
+            # Correct Wikimedia scoring
+            # -------------------------------------------------
+
+            out.sort(
+                key=lambda x:
+                    score_candidate(
+                        x,
+                        query,
+                        "Wikimedia Commons"
                     ),
-                "source":
-                    "Wikimedia Commons"
-            })
+                reverse=True
+            )
 
-        out.sort(
-            key=lambda x:
-                score_candidate(
-                    x,
-                    query,
-                    "Wikimedia Commons"
-                ),
-            reverse=True
-        )
+            return out
 
-        return out
+        except Exception as e:
 
-    except Exception as e:
+            print(
+                "Wikimedia search failed:",
+                e
+            )
 
-        print(
-            "Wikimedia search failed:",
-            e
-        )
+            if attempt < 2:
 
-        return []
+                wait = 3 * (
+                    attempt + 1
+                )
 
+                print(
+                    f"Retrying Wikimedia "
+                    f"in {wait}s..."
+                )
+
+                time.sleep(wait)
+
+            else:
+                return []
+
+    return []
 
 def download_image(source):
 
