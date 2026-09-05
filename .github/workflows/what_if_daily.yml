@@ -11,8 +11,10 @@ on:
     - cron: "0 17 * * *"
 
 permissions:
-  contents: read
-
+  contents: write
+concurrency:
+  group: what-if-daily-topic
+  cancel-in-progress: false
 jobs:
   generate-and-upload:
     runs-on: ubuntu-latest
@@ -75,7 +77,20 @@ jobs:
           echo "Generated files verified:"
           ls -lh output/what_if_daily.mp4
           ls -lh output/metadata.json
+      - name: Save topic history
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          git add topic_history.json
+
+          if git diff --cached --quiet; then
+            echo "No topic history changes to commit."
+          else
+            git commit -m "Update WHAT IF DAILY topic history"
+            git push
+          fi
       - name: Cleanup generated files
         if: always()
         run: |
