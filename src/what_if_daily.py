@@ -429,27 +429,47 @@ def add_atmosphere(
     seed,
     mode
 ):
+    """
+    Keep real photographs looking REAL.
+
+    - No fake stars on Earth/Moon/Mars photographs.
+    - No artificial particles over documentary photographs.
+    - Only very subtle cinematic atmospheric enhancement.
+    """
 
     random.seed(seed)
 
-    layer = Image.new(
-        "RGBA",
-        img.size,
-        (0, 0, 0, 0)
-    )
-
-    d = ImageDraw.Draw(layer)
-
+    # ---------------------------------------------------------
+    # REAL PHOTOGRAPH PROTECTION
+    # ---------------------------------------------------------
+    # Do NOT place artificial stars/dots over real photographs.
+    # This keeps NASA/Wikimedia imagery natural.
     if mode in (
-        "space",
         "earth",
         "moon",
-        "rings",
-        "mars"
+        "mars",
+        "ocean",
+        "volcano",
+        "ice",
+        "city"
     ):
+        return img.convert("RGB")
 
-        for _ in range(75):
+    # ---------------------------------------------------------
+    # SPACE MODE
+    # ---------------------------------------------------------
+    # Only deep-space scenes may receive extremely subtle
+    # atmospheric particles.
+    if mode == "space":
+        layer = Image.new(
+            "RGBA",
+            img.size,
+            (0, 0, 0, 0)
+        )
 
+        d = ImageDraw.Draw(layer)
+
+        for _ in range(18):
             x = random.randrange(WIDTH)
             y = random.randrange(HEIGHT)
 
@@ -457,34 +477,9 @@ def add_atmosphere(
                 [1, 1, 1, 2]
             )
 
-            d.ellipse(
-                (
-                    x - r,
-                    y - r,
-                    x + r,
-                    y + r
-                ),
-                fill=(
-                    255,
-                    255,
-                    255,
-                    random.randint(
-                        70,
-                        170
-                    )
-                )
-            )
-
-    else:
-
-        for _ in range(18):
-
-            x = random.randrange(WIDTH)
-            y = random.randrange(HEIGHT)
-
-            r = random.randint(
-                30,
-                100
+            alpha = random.randint(
+                18,
+                55
             )
 
             d.ellipse(
@@ -498,20 +493,22 @@ def add_atmosphere(
                     255,
                     255,
                     255,
-                    random.randint(
-                        3,
-                        10
-                    )
+                    alpha
                 )
             )
 
-    return Image.alpha_composite(
-        img.convert("RGBA"),
-        layer.filter(
-            ImageFilter.GaussianBlur(.5)
-        )
-    ).convert("RGB")
+        return Image.alpha_composite(
+            img.convert("RGBA"),
+            layer.filter(
+                ImageFilter.GaussianBlur(0.7)
+            )
+        ).convert("RGB")
 
+    # ---------------------------------------------------------
+    # ALL OTHER MODES
+    # ---------------------------------------------------------
+    # Preserve original photograph completely.
+    return img.convert("RGB")
 
 def is_bad_title(title):
 
@@ -871,7 +868,7 @@ def wikimedia_search(
                 score_candidate(
                     x,
                     query,
-                    "Wikimedia"
+                    "Wikimedia Commons"
                 ),
             reverse=True
         )
