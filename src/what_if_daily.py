@@ -36,7 +36,7 @@ VOICE = os.getenv(
     "en-US-AndrewMultilingualNeural"
 )
 
-TTS_RATE = os.getenv("TTS_RATE", "-5%")
+TTS_RATE = os.getenv("TTS_RATE", "+5%")
 
 NASA_API = "https://images-api.nasa.gov/search"
 WIKIMEDIA_API = "https://commons.wikimedia.org/w/api.php"
