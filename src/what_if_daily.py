@@ -1630,7 +1630,68 @@ def create_realistic_scene(
         "source": source,
         "mode": mode
     }
+def generate_unique_topic():
+    history_file = ROOT / "topic_history.json"
 
+    if history_file.exists():
+        try:
+            history = json.loads(
+                history_file.read_text(encoding="utf-8")
+            )
+        except Exception:
+            history = []
+    else:
+        history = []
+
+    prompt = f"""
+Generate ONE completely new and highly interesting "What If" topic
+for a YouTube Shorts channel called WHAT IF DAILY.
+
+The topic must be:
+- scientifically interesting
+- visually spectacular
+- easy to understand
+- suitable for a 60-second video
+- different from all previous topics
+
+Previous topics:
+{json.dumps(history[-100:], ensure_ascii=False)}
+
+Return ONLY the topic.
+Start with "What If".
+Do not explain anything.
+"""
+
+    for attempt in range(5):
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt
+        )
+
+        topic = response.text.strip()
+        topic = re.sub(r"[\r\n]+", " ", topic).strip()
+
+        if topic and topic.lower() not in {
+            x.lower() for x in history
+        }:
+            history.append(topic)
+
+            history_file.write_text(
+                json.dumps(
+                    history,
+                    ensure_ascii=False,
+                    indent=2
+                ),
+                encoding="utf-8"
+            )
+
+            return topic
+
+        print("Duplicate topic detected. Generating another...")
+
+    raise RuntimeError(
+        "Could not generate a unique topic after 5 attempts."
+    )
 
 def create_story(topic):
 
