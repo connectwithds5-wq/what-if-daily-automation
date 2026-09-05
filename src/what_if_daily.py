@@ -48,43 +48,63 @@ SESSION.headers.update({
 })
 
 
+TOPIC_HISTORY_FILE = ROOT / "topic_history.json"
+
+
 def load_topic_history():
-    history_file = OUTPUT / "topic_history.json"
+    history_file = TOPIC_HISTORY_FILE
 
     if not history_file.exists():
         return []
 
     try:
-        data = json.loads(history_file.read_text(encoding="utf-8"))
+        data = json.loads(
+            history_file.read_text(
+                encoding="utf-8"
+            )
+        )
+
         if isinstance(data, list):
             return data
+
     except Exception as e:
-        print("Topic history read failed:", e)
+        print(
+            "Topic history read failed:",
+            e
+        )
 
     return []
 
 
 def save_topic_history(history):
-    history_file = OUTPUT / "topic_history.json"
-    history_file.write_text(
-        json.dumps(history[-1000:], indent=2),
+    TOPIC_HISTORY_FILE.write_text(
+        json.dumps(
+            history[-1000:],
+            ensure_ascii=False,
+            indent=2
+        ),
         encoding="utf-8"
     )
 
 
 def generate_unique_topic():
-    if not GEMINI_API_KEY:
-        raise RuntimeError("GEMINI_API_KEY is missing")
 
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    if not GEMINI_API_KEY:
+        raise RuntimeError(
+            "GEMINI_API_KEY is missing"
+        )
+
+    client = genai.Client(
+        api_key=GEMINI_API_KEY
+    )
 
     history = load_topic_history()
 
-    # Keep the prompt manageable even after hundreds of videos.
     recent_topics = history[-200:]
 
     history_text = "\n".join(
-        f"- {x}" for x in recent_topics
+        f"- {x}"
+        for x in recent_topics
     )
 
     prompt = f"""
@@ -116,10 +136,15 @@ Do not add explanations.
 """
 
     for attempt in range(1, 6):
+
         try:
+
             print("")
             print("======================================")
-            print(f"TOPIC GENERATION ATTEMPT {attempt}/5")
+            print(
+                f"TOPIC GENERATION ATTEMPT "
+                f"{attempt}/5"
+            )
             print("======================================")
 
             response = client.models.generate_content(
@@ -127,12 +152,22 @@ Do not add explanations.
                 contents=prompt
             )
 
-            if not response or not getattr(response, "text", None):
-                raise RuntimeError("Empty Gemini topic response.")
+            if (
+                not response
+                or not getattr(
+                    response,
+                    "text",
+                    None
+                )
+            ):
+                raise RuntimeError(
+                    "Empty Gemini topic response."
+                )
 
             text = response.text.strip()
 
             if text.startswith("```"):
+
                 text = re.sub(
                     r"^```(?:json)?",
                     "",
@@ -157,10 +192,11 @@ Do not add explanations.
                     "Gemini returned an empty topic."
                 )
 
-            if not topic.lower().startswith("what if"):
+            if not topic.lower().startswith(
+                "what if"
+            ):
                 topic = "What If " + topic
 
-            # Basic duplicate check.
             normalized = re.sub(
                 r"[^a-z0-9]+",
                 " ",
@@ -170,21 +206,31 @@ Do not add explanations.
             duplicate = False
 
             for old_topic in history:
+
                 old_normalized = re.sub(
                     r"[^a-z0-9]+",
                     " ",
                     old_topic.lower()
                 ).strip()
 
-                if normalized == old_normalized:
+                if (
+                    normalized
+                    == old_normalized
+                ):
                     duplicate = True
                     break
 
             if duplicate:
-                print("Duplicate topic detected. Retrying...")
+
+                print(
+                    "Duplicate topic detected. "
+                    "Generating another..."
+                )
+
                 continue
 
             history.append(topic)
+
             save_topic_history(history)
 
             print("")
@@ -196,55 +242,35 @@ Do not add explanations.
             return topic
 
         except Exception as e:
-            print("TOPIC GENERATION ERROR:")
+
+            print(
+                "TOPIC GENERATION ERROR:"
+            )
             print(str(e))
 
             if attempt >= 5:
+
                 raise RuntimeError(
-                    f"Could not generate a unique topic: {e}"
+                    "Could not generate a unique "
+                    f"topic: {e}"
                 )
 
             import time
-            time.sleep(5 * attempt)
+
+            wait_seconds = 5 * attempt
+
+            print(
+                f"Retrying in "
+                f"{wait_seconds} seconds..."
+            )
+
+            time.sleep(
+                wait_seconds
+            )
 
     raise RuntimeError(
         "Failed to generate a unique topic."
-)
-
-BAD_WORDS = [
-    "diagram",
-    "map",
-    "chart",
-    "graph",
-    "plot",
-    "scheme",
-    "schematic",
-    "logo",
-    "icon",
-    "symbol",
-    "flag",
-    "coat of arms",
-    "illustration",
-    "drawing",
-    "sketch",
-    "painting",
-    "poster",
-    "infographic",
-    "cross section",
-    "cutaway",
-    "collage",
-    "animation",
-    "render",
-    "computer generated",
-    "concept art",
-    "fictional",
-    "model",
-    "thumbnail",
-    "screenshot",
-    "watermark"
-]
-
-
+    )
 def run(cmd, check=True):
     print("RUN:", " ".join(map(str, cmd)))
 
