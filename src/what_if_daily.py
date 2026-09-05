@@ -1770,7 +1770,713 @@ Return ONLY valid JSON in this schema:
             text[:5000]
         )
 
-           part="snippet,status",
+        raise RuntimeError(
+            f"Gemini returned invalid JSON: {e}"
+        )
+
+    # =========================================================
+    # CLEAN METADATA
+    # =========================================================
+
+    story["title"] = safe_ascii(
+        story.get(
+            "title",
+            topic
+        ),
+        100
+    )
+
+    story["description"] = safe_ascii(
+        story.get(
+            "description",
+            ""
+        ),
+        4500
+    )
+
+    story["keywords"] = [
+        safe_ascii(
+            x,
+            60
+        )
+        for x in story.get(
+            "keywords",
+            []
+        )
+    ][:20]
+
+    story["hashtags"] = [
+        safe_ascii(
+            x,
+            40
+        )
+        for x in story.get(
+            "hashtags",
+            []
+        )
+    ][:12]
+
+    # =========================================================
+    # VALIDATE EXACTLY 8 SCENES
+    # =========================================================
+
+    scenes = story.get(
+        "scenes",
+        []
+    )[:SCENES]
+
+    if len(scenes) != SCENES:
+
+        raise RuntimeError(
+            "Gemini returned "
+            f"{len(scenes)} scenes; "
+            f"expected {SCENES}"
+        )
+
+    for s in scenes:
+
+        s["narration"] = safe_ascii(
+            s.get(
+                "narration",
+                ""
+            ),
+            600
+        )
+
+        s["on_screen"] = safe_ascii(
+            s.get(
+                "on_screen",
+                ""
+            ),
+            100
+        )
+
+        s["visual"] = safe_ascii(
+            s.get(
+                "visual",
+                ""
+            ),
+            500
+        )
+
+    story["scenes"] = scenes
+
+    print("")
+    print(
+        "======================================"
+    )
+
+    print(
+        "GEMINI STORY READY"
+    )
+
+    print(
+        "Title:",
+        story["title"]
+    )
+
+    print(
+        "Scenes:",
+        len(
+            story["scenes"]
+        )
+    )
+
+    print(
+        "======================================"
+    )
+
+    return story
+
+
+def create_voice(text):
+
+    out = AUDIO / "narration.mp3"
+
+    txt = safe_ascii(
+        text,
+        6000
+    )
+
+    # IMPORTANT:
+    # negative Edge-TTS rates must be one argument,
+    # e.g. --rate=-5%
+
+    run([
+        "edge-tts",
+        "--voice",
+        VOICE,
+        f"--rate={TTS_RATE}",
+        "--volume=+0%",
+        "--pitch=-2Hz",
+        "--text",
+        txt,
+        "--write-media",
+        str(out)
+    ])
+
+    return out
+
+
+def create_music():
+
+    out = AUDIO / "music.wav"
+
+    filt = (
+        "sine=frequency=55:duration=60,"
+        "volume=0.045[a];"
+
+        "sine=frequency=110:duration=60,"
+        "volume=0.020[b];"
+
+        "anoisesrc=color=pink:duration=60,"
+        "lowpass=f=800,volume=0.006[n];"
+
+        "[a][b]amix=inputs=2:duration=longest[p];"
+
+        "[p][n]amix=inputs=2:"
+        "duration=longest,"
+        "alimiter=limit=0.75"
+    )
+
+    run([
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        filt,
+        "-t",
+        "60",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        str(out)
+    ])
+
+    return out
+
+
+def create_sound_design():
+
+    out = AUDIO / "sfx.wav"
+
+    # Gentle cinematic pulses at scene boundaries.
+    # Fully generated locally.
+
+    sources = [
+        "aevalsrc=0:d=60[s]"
+    ]
+
+    labels = [
+        "s"
+    ]
+
+    for i, ms in enumerate(
+        range(
+            0,
+            60000,
+            7500
+        ),
+        start=1
+    ):
+
+        freq = (
+            70
+            + (
+                i % 4
+            ) * 18
+        )
+
+        amp = (
+            0.08
+            if i < 8
+            else 0.12
+        )
+
+        label = f"i{i}"
+
+        sources.append(
+            "aevalsrc="
+            f"{amp}*sin(2*PI*{freq}*t)"
+            "*exp(-7*t):d=0.55,"
+            f"adelay={ms}|{ms}"
+            f"[{label}]"
+        )
+
+        labels.append(
+            label
+        )
+
+    filt = (
+        ";".join(sources)
+        + ";"
+        + "".join(
+            f"[{x}]"
+            for x in labels
+        )
+        + f"amix=inputs={len(labels)}:"
+        "duration=longest,"
+        "alimiter=limit=0.7"
+    )
+
+    run([
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        filt,
+        "-t",
+        "60",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        str(out)
+    ])
+
+    return out
+
+
+def create_video(scene_info):
+
+    clips = []
+
+    for i, info in enumerate(
+        scene_info
+    ):
+
+        clip = (
+            FRAMES
+            / f"clip_{i:02d}.mp4"
+        )
+
+        # Each source image is already 1080x1920.
+        # zoompan adds motion instead of static posters.
+
+        zoom = (
+            "1.0+0.055*on/225"
+        )
+
+        if i % 2 == 0:
+
+            xexpr = (
+                "iw/2-(iw/zoom/2)"
+            )
+
+            yexpr = (
+                "ih/2-(ih/zoom/2)"
+                "-10*on/225"
+            )
+
+        else:
+
+            xexpr = (
+                "iw/2-(iw/zoom/2)"
+                "+12*on/225"
+            )
+
+            yexpr = (
+                "ih/2-(ih/zoom/2)"
+                "+10*on/225"
+            )
+
+        vf = (
+            f"zoompan="
+            f"z='{zoom}':"
+            f"x='{xexpr}':"
+            f"y='{yexpr}':"
+            "d=225:"
+            "s=1080x1920:"
+            "fps=30,"
+            "format=yuv420p"
+        )
+
+        run([
+            "ffmpeg",
+            "-y",
+            "-loop",
+            "1",
+            "-i",
+            info["path"],
+            "-vf",
+            vf,
+            "-t",
+            str(SCENE_DURATION),
+            "-an",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "18",
+            "-pix_fmt",
+            "yuv420p",
+            str(clip)
+        ])
+
+        clips.append(
+            clip
+        )
+
+    concat = (
+        OUTPUT
+        / "concat.txt"
+    )
+
+    concat.write_text(
+        "\n".join(
+            f"file '{p.as_posix()}'"
+            for p in clips
+        ),
+        encoding="utf-8"
+    )
+
+    silent = (
+        OUTPUT
+        / "video_silent.mp4"
+    )
+
+    run([
+        "ffmpeg",
+        "-y",
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        str(concat),
+        "-c",
+        "copy",
+        str(silent)
+    ])
+
+    return silent
+
+
+def mix_audio(
+    video_silent,
+    narration,
+    music,
+    sfx
+):
+
+    audio = (
+        AUDIO
+        / "final_audio.m4a"
+    )
+
+    run([
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(narration),
+        "-i",
+        str(music),
+        "-i",
+        str(sfx),
+
+        "-filter_complex",
+
+        "[0:a]"
+        "loudnorm="
+        "I=-15:"
+        "TP=-1.5:"
+        "LRA=8,"
+        "volume=1.12[n];"
+
+        "[1:a]"
+        "volume=0.14[m];"
+
+        "[2:a]"
+        "volume=0.20[s];"
+
+        "[n][m][s]"
+        "amix="
+        "inputs=3:"
+        "duration=longest:"
+        "dropout_transition=2,"
+        "alimiter=limit=0.9[a]",
+
+        "-map",
+        "[a]",
+
+        "-t",
+        "60",
+
+        "-c:a",
+        "aac",
+
+        "-b:a",
+        "192k",
+
+        str(audio)
+    ])
+
+    run([
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(video_silent),
+        "-i",
+        str(audio),
+
+        "-map",
+        "0:v:0",
+
+        "-map",
+        "1:a:0",
+
+        "-c:v",
+        "copy",
+
+        "-c:a",
+        "aac",
+
+        "-shortest",
+
+        str(VIDEO)
+    ])
+
+    return VIDEO
+
+
+def save_metadata(
+    story,
+    sources
+):
+
+    desc = safe_ascii(
+        story.get(
+            "description",
+            ""
+        ),
+        4500
+    )
+
+    desc += (
+        "\n\n"
+        "WHAT IF DAILY - "
+        "IMAGINE. WATCH. WONDER."
+    )
+
+    desc += (
+        "\n\n"
+        "Visual sources used in this video:\n"
+    )
+
+    seen = set()
+
+    for src in sources:
+
+        url = src.get(
+            "url",
+            ""
+        )
+
+        title = safe_ascii(
+            src.get(
+                "title",
+                ""
+            ),
+            180
+        )
+
+        license_name = safe_ascii(
+            src.get(
+                "license",
+                "Unknown"
+            ),
+            100
+        )
+
+        source_name = safe_ascii(
+            src.get(
+                "source",
+                "Unknown"
+            ),
+            40
+        )
+
+        if (
+            url
+            and url not in seen
+        ):
+
+            seen.add(
+                url
+            )
+
+            desc += (
+                f"- {source_name}: "
+                f"{title} | "
+                f"{license_name} | "
+                f"{url}\n"
+            )
+
+    data = {
+
+        "title":
+            story.get(
+                "title",
+                "WHAT IF DAILY"
+            ),
+
+        "description":
+            desc,
+
+        "keywords":
+            story.get(
+                "keywords",
+                []
+            ),
+
+        "hashtags":
+            story.get(
+                "hashtags",
+                []
+            ),
+
+        "created_at":
+            datetime.utcnow().isoformat()
+            + "Z",
+
+        "voice":
+            VOICE,
+
+        "tts_rate":
+            TTS_RATE,
+
+        "visual_style":
+            "real high-resolution "
+            "photographic imagery from "
+            "NASA/Wikimedia Commons with "
+            "cinematic crop, grade and motion",
+
+        "source_count":
+            len(seen)
+    }
+
+    METADATA.write_text(
+        json.dumps(
+            data,
+            indent=2
+        ),
+        encoding="utf-8"
+    )
+
+    return data
+
+
+def upload_youtube(metadata):
+
+    raw = os.getenv(
+        "YOUTUBE_OAUTH_JSON"
+    )
+
+    if not raw:
+
+        print(
+            "YOUTUBE_OAUTH_JSON missing; "
+            "skipping upload"
+        )
+
+        return
+
+    data = json.loads(
+        raw
+    )
+
+    creds = Credentials(
+        None,
+        refresh_token=data[
+            "refresh_token"
+        ],
+        token_uri=
+            "https://oauth2.googleapis.com/token",
+        client_id=data[
+            "client_id"
+        ],
+        client_secret=data[
+            "client_secret"
+        ],
+        scopes=[
+            "https://www.googleapis.com/auth/"
+            "youtube.upload"
+        ]
+    )
+
+    youtube = build(
+        "youtube",
+        "v3",
+        credentials=creds
+    )
+
+    description = safe_ascii(
+        metadata[
+            "description"
+        ],
+        4900
+    )
+
+    hashtags = " ".join(
+        metadata.get(
+            "hashtags",
+            []
+        )[:8]
+    )
+
+    if hashtags:
+
+        description += (
+            "\n\n"
+            + hashtags
+        )
+
+    body = {
+
+        "snippet": {
+
+            "title":
+                safe_ascii(
+                    metadata[
+                        "title"
+                    ],
+                    95
+                ),
+
+            "description":
+                description,
+
+            "tags":
+                metadata.get(
+                    "keywords",
+                    []
+                )[:25],
+
+            "categoryId":
+                "28"
+        },
+
+        "status": {
+
+            "privacyStatus":
+                "public",
+
+            "selfDeclaredMadeForKids":
+                False
+        }
+    }
+
+    print(
+        "Uploading to YouTube:",
+        body["snippet"]["title"]
+    )
+
+    req = youtube.videos().insert(
+        part="snippet,status",
         body=body,
         media_body=MediaFileUpload(
             str(VIDEO),
@@ -1897,4 +2603,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-   
