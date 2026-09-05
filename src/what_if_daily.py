@@ -48,39 +48,168 @@ SESSION.headers.update({
 })
 
 
-TOPICS = [
-    "What If Earth Had Rings Like Saturn?",
-    "What If Earth Suddenly Stopped Spinning?",
-    "What If the Moon Came 10 Times Closer?",
-    "What If Humans Could Breathe Underwater?",
-    "What If Earth Had Two Moons?",
-    "What If the Sun Disappeared for 24 Hours?",
-    "What If Earth Lost Its Magnetic Field?",
-    "What If Every Volcano Erupted at Once?",
-    "What If Earth Became Twice as Large?",
-    "What If Gravity Suddenly Became Half as Strong?",
-    "What If Dinosaurs Returned Today?",
-    "What If Humans Could Live on Mars?",
-    "What If the Oceans Suddenly Froze?",
-    "What If Earth Had No Moon?",
-    "What If the Sky Turned Red?",
-    "What If Time Suddenly Stopped for One Minute?",
-    "What If Humans Never Needed Sleep?",
-    "What If AI Controlled Every City?",
-    "What If Earth Entered a New Ice Age?",
-    "What If the Oceans Rose 100 Meters?",
-    "What If Earth Started Moving Toward the Sun?",
-    "What If We Found a Second Earth?",
-    "What If Every Star Suddenly Disappeared?",
-    "What If Earth Had the Gravity of the Moon?",
-    "What If Humans Could See in Total Darkness?",
-    "What If the Sahara Became a Giant Ocean?",
-    "What If Earth Became 90 Percent Ocean?",
-    "What If the Moon Broke Apart?",
-    "What If Antarctica Suddenly Melted?",
-    "What If Earth Had No Atmosphere?",
-]
+def load_topic_history():
+    history_file = OUTPUT / "topic_history.json"
 
+    if not history_file.exists():
+        return []
+
+    try:
+        data = json.loads(history_file.read_text(encoding="utf-8"))
+        if isinstance(data, list):
+            return data
+    except Exception as e:
+        print("Topic history read failed:", e)
+
+    return []
+
+
+def save_topic_history(history):
+    history_file = OUTPUT / "topic_history.json"
+    history_file.write_text(
+        json.dumps(history[-1000:], indent=2),
+        encoding="utf-8"
+    )
+
+
+def generate_unique_topic():
+    if not GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY is missing")
+
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
+    history = load_topic_history()
+
+    # Keep the prompt manageable even after hundreds of videos.
+    recent_topics = history[-200:]
+
+    history_text = "\n".join(
+        f"- {x}" for x in recent_topics
+    )
+
+    prompt = f"""
+You are the topic strategist for WHAT IF DAILY,
+a viral cinematic science YouTube Shorts channel.
+
+Generate ONE completely new "What If..." topic.
+
+The topic must:
+- be scientifically interesting
+- create immediate curiosity
+- work for a 60-second YouTube Short
+- have strong visual possibilities using real photographs
+- be understandable to a general audience
+- NOT be a duplicate or near-duplicate of previous topics
+- NOT use the same basic scenario with slightly different wording
+
+Previous topics:
+{history_text}
+
+Return ONLY valid JSON:
+
+{{
+  "topic": "What If ..."
+}}
+
+The topic must start with "What If".
+Do not add explanations.
+"""
+
+    for attempt in range(1, 6):
+        try:
+            print("")
+            print("======================================")
+            print(f"TOPIC GENERATION ATTEMPT {attempt}/5")
+            print("======================================")
+
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt
+            )
+
+            if not response or not getattr(response, "text", None):
+                raise RuntimeError("Empty Gemini topic response.")
+
+            text = response.text.strip()
+
+            if text.startswith("```"):
+                text = re.sub(
+                    r"^```(?:json)?",
+                    "",
+                    text
+                ).strip()
+
+                text = re.sub(
+                    r"```$",
+                    "",
+                    text
+                ).strip()
+
+            data = json.loads(text)
+
+            topic = safe_ascii(
+                data.get("topic", ""),
+                180
+            ).strip()
+
+            if not topic:
+                raise RuntimeError(
+                    "Gemini returned an empty topic."
+                )
+
+            if not topic.lower().startswith("what if"):
+                topic = "What If " + topic
+
+            # Basic duplicate check.
+            normalized = re.sub(
+                r"[^a-z0-9]+",
+                " ",
+                topic.lower()
+            ).strip()
+
+            duplicate = False
+
+            for old_topic in history:
+                old_normalized = re.sub(
+                    r"[^a-z0-9]+",
+                    " ",
+                    old_topic.lower()
+                ).strip()
+
+                if normalized == old_normalized:
+                    duplicate = True
+                    break
+
+            if duplicate:
+                print("Duplicate topic detected. Retrying...")
+                continue
+
+            history.append(topic)
+            save_topic_history(history)
+
+            print("")
+            print("======================================")
+            print("NEW UNIQUE TOPIC")
+            print(topic)
+            print("======================================")
+
+            return topic
+
+        except Exception as e:
+            print("TOPIC GENERATION ERROR:")
+            print(str(e))
+
+            if attempt >= 5:
+                raise RuntimeError(
+                    f"Could not generate a unique topic: {e}"
+                )
+
+            import time
+            time.sleep(5 * attempt)
+
+    raise RuntimeError(
+        "Failed to generate a unique topic."
+)
 
 BAD_WORDS = [
     "diagram",
