@@ -27,6 +27,7 @@ METADATA = OUTPUT / "metadata.json"
 HISTORY = ROOT / "topic_history.json"
 
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-2.5-flash")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 VOICE = os.getenv("TTS_VOICE", "en-US-AndrewMultilingualNeural")
 TTS_RATE = os.getenv("TTS_RATE", "+5%")
@@ -102,23 +103,93 @@ def transient(exc):
     return any(x in s for x in ["500", "502", "503", "504", "429", "INTERNAL", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "OVERLOADED", "HIGH DEMAND", "RATE LIMIT", "TEMPORARY"])
 
 
-def gemini_text(prompt, attempts=5):
-    for i in range(attempts):
-        try:
-            r = CLIENT.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-            text = (getattr(r, "text", "") or "").strip()
-            if text:
-                return text
-            raise RuntimeError("Gemini returned an empty response")
-        except Exception as e:
-            print(f"Gemini attempt {i + 1}/{attempts} failed: {e}")
-            if not transient(e) or i == attempts - 1:
-                raise
-            wait = 2 ** i
-            print(f"Retrying in {wait}s...")
-            import time
-            time.sleep(wait)
-    raise RuntimeError("Gemini failed")
+def is_quota_error(exc):
+    s = str(exc).upper()
+    return any(
+        x in s
+        for x in [
+            "RESOURCE_EXHAUSTED",
+            "QUOTA",
+            "GENERATEREQUESTSPERDAY",
+            "FREE_TIER",
+            "FREE TIER"
+        ]
+    )
+
+
+def gemini_text(prompt, attempts=3):
+    models = []
+
+    for model in [
+        GEMINI_MODEL,
+        GEMINI_FALLBACK_MODEL
+    ]:
+        if model and model not in models:
+            models.append(model)
+
+    last_error = None
+
+    for model in models:
+
+        for i in range(attempts):
+
+            try:
+                print(
+                    f"Gemini model: {model} | "
+                    f"attempt {i + 1}/{attempts}"
+                )
+
+                r = CLIENT.models.generate_content(
+                    model=model,
+                    contents=prompt
+                )
+
+                text = (
+                    getattr(r, "text", "") or ""
+                ).strip()
+
+                if text:
+                    return text
+
+                raise RuntimeError(
+                    "Gemini returned an empty response"
+                )
+
+            except Exception as e:
+
+                last_error = e
+
+                print(
+                    f"Gemini {model} attempt "
+                    f"{i + 1}/{attempts} failed: {e}"
+                )
+
+                # Daily quota errors should NOT waste
+                # all retry attempts on the same model.
+                if is_quota_error(e):
+
+                    print(
+                        f"Quota exhausted for {model}. "
+                        "Trying fallback model..."
+                    )
+
+                    break
+
+                if not transient(e) or i == attempts - 1:
+                    break
+
+                wait = 2 ** i
+
+                print(
+                    f"Retrying {model} in {wait}s..."
+                )
+
+                import time
+                time.sleep(wait)
+
+    raise RuntimeError(
+        f"All Gemini models failed. Last error: {last_error}"
+    )
 
 
 def generate_unique_topic():
@@ -132,7 +203,7 @@ Previous topics:
 {json.dumps(history[-200:], ensure_ascii=False)}
 """
     for _ in range(5):
-        topic = safe_ascii(gemini_text(prompt), 100).strip().strip('"')
+        topic = safe_ascii(gemini_text(prompt, attempts=2), 100).strip().strip('"')
         norm = re.sub(r"[^a-z0-9]+", " ", topic.lower()).strip()
         old = {re.sub(r"[^a-z0-9]+", " ", str(x).lower()).strip() for x in history}
         if topic and norm not in old:
@@ -156,7 +227,7 @@ Rules:
 - Build curiosity: hook, escalation, consequences, surprising fact, ending.
 - No image URLs, no visual prompts, no markdown.
 """
-    raw = gemini_text(prompt, 5)
+    raw = gemini_text(prompt, attempts=2)
     raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw.strip(), flags=re.I)
     try:
         data = json.loads(raw)
