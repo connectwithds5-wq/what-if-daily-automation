@@ -27,7 +27,7 @@ METADATA = OUTPUT / "metadata.json"
 HISTORY = ROOT / "topic_history.json"
 
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
-GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite)
+GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 VOICE = os.getenv("TTS_VOICE", "en-US-AndrewMultilingualNeural")
 TTS_RATE = os.getenv("TTS_RATE", "+5%")
