@@ -2,6 +2,25 @@ from pathlib import Path
 
 SOURCE = Path("src/what_if_daily_v2.py")
 
+WRITE_VISUAL_QC = r'''def write_visual_qc(index, provider):
+    manifest = OUTPUT / "visual_qc.json"
+    data = []
+    if manifest.exists():
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except Exception:
+            data = []
+    data = [x for x in data if x.get("scene") != index + 1]
+    data.append({
+        "scene": index + 1,
+        "provider": provider,
+        "generated": provider != "fallback",
+    })
+    data.sort(key=lambda x: x["scene"])
+    manifest.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+'''
+
 QC = '''def production_qc(story):
     if not VIDEO.exists() or VIDEO.stat().st_size < 100000:
         raise RuntimeError("QC failed: final MP4 missing or suspiciously small")
@@ -46,7 +65,8 @@ QC = '''def production_qc(story):
 '''
 
 GEMINI_IMAGE = r'''def gemini_image(prompt, output_path):
-    # Gemini native image models have no Gemini API free tier. Keep this provider opt-in.
+    # Gemini native image generation is paid-only through the Gemini Developer API.
+    # Keep disabled by default so the automation never creates unexpected image charges.
     if os.getenv("GEMINI_IMAGE_ENABLED", "false").lower() != "true":
         return False
     if not (VISUALS_ENABLED and GEMINI_API_KEY):
@@ -79,7 +99,7 @@ SCENE: {prompt}""".strip()[:12000]
                         print(f"Gemini image saved: {output_path}")
                         return True
     except Exception as exc:
-        print(f"Gemini image disabled/unavailable: {exc}")
+        print(f"Gemini image unavailable: {exc}")
     return False
 '''
 
@@ -124,8 +144,18 @@ SCENE: {prompt}""".strip()[:2048]
                     json=payload,
                     timeout=120,
                 )
-                if response.status_code in (429, 500, 502, 503, 504):
-                    print(f"{label} temporary capacity/server error {response.status_code}")
+                if response.status_code == 429:
+                    try:
+                        detail = response.json().get("errors", [{}])[0].get("message", "429")
+                    except Exception:
+                        detail = "429"
+                    print(f"{label} HTTP 429: {detail}")
+                    if "daily free allocation" in detail.lower() or "account limited" in detail.lower():
+                        print("Cloudflare daily free allocation is exhausted; stop image retries for this model.")
+                        break
+                    continue
+                if response.status_code in (500, 502, 503, 504):
+                    print(f"{label} temporary server error {response.status_code}")
                     continue
                 response.raise_for_status()
 
@@ -194,6 +224,13 @@ OVERLAY = r'''def overlay_frame(background, on_screen, narration, index, progres
 
 s = SOURCE.read_text(encoding="utf-8")
 
+# Ensure the manifest writer exists before make_base_visual.
+if "def write_visual_qc(" not in s:
+    marker = "def make_base_visual(topic, scene, index):"
+    if marker not in s:
+        raise RuntimeError("Could not locate make_base_visual()")
+    s = s.replace(marker, WRITE_VISUAL_QC + marker, 1)
+
 for name, replacement, next_name in [
     ("gemini_image", GEMINI_IMAGE, "cloudflare_image"),
     ("cloudflare_image", CLOUDFLARE_IMAGE, "overlay_frame"),
@@ -222,4 +259,4 @@ if "    production_qc(story)\n    upload_youtube(story)" not in s:
         s = s.replace("    write_metadata(story)\n    upload_youtube(story)", "    write_metadata(story)\n    production_qc(story)\n    upload_youtube(story)", 1)
 
 SOURCE.write_text(s, encoding="utf-8")
-print("Installed free Cloudflare multi-model visual generation and production visual QC.")
+print("Installed visual QC writer and production image pipeline.")
