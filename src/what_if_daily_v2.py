@@ -170,11 +170,14 @@ def create_story(topic):
     prompt = f"""
 Create an exciting 60-second WHAT IF DAILY science short about: {topic}
 Return ONLY valid JSON with exactly this structure:
-{{"title":"...","description":"...","keywords":["..."],"hashtags":["#..."],"scenes":[{{"narration":"...","on_screen":"...","visual_prompt":"..."}}]}}
+{{"title":"...","description":"...","keywords":["..."],"hashtags":["#..."],"scenes":[{{"narration":"...","on_screen":"...","visual_prompt":"...","sfx_type":"..."}}]}}
 Rules:
 - Exactly 8 scenes.
-- Total narration should fit about 55-60 seconds.
-- Each narration is 18-30 words, natural spoken English, factual but entertaining.
+- Total narration must be 112-124 words across all 8 scenes so the voice finishes naturally inside 60 seconds.
+- Each narration must be 13-16 words, natural spoken English, factual but entertaining.
+- Each scene narration must be short enough to finish comfortably within 7.5 seconds at the configured voice rate.
+- Add exactly one sfx_type per scene from this list: none, airplane, bird, sand, wind, storm, thunder, ocean, water, fire, city, impact, rocket, space, heartbeat, whoosh, rumble.
+- sfx_type must describe the most important real-world sound implied by that scene; use none when no sound would help.
 - on_screen is punchy English text, maximum 55 characters.
 - visual_prompt must describe the EXACT thing being narrated in that scene.
 - visual_prompt must be a cinematic, photorealistic scientific visualization suitable for a vertical 9:16 Short.
@@ -194,16 +197,23 @@ Rules:
     scenes = data.get("scenes", [])
     if len(scenes) != SCENES:
         raise RuntimeError(f"Gemini returned {len(scenes)} scenes; expected {SCENES}")
+    allowed_sfx = {"none", "airplane", "bird", "sand", "wind", "storm", "thunder", "ocean", "water", "fire", "city", "impact", "rocket", "space", "heartbeat", "whoosh", "rumble"}
     for i, scene in enumerate(scenes):
         scene["narration"] = safe_ascii(scene.get("narration", ""), 700)
         scene["on_screen"] = safe_ascii(scene.get("on_screen", ""), 55)
         scene["visual_prompt"] = safe_ascii(scene.get("visual_prompt", ""), 1800)
+        scene["sfx_type"] = safe_ascii(scene.get("sfx_type", "none"), 30).lower().strip()
+        if scene["sfx_type"] not in allowed_sfx:
+            scene["sfx_type"] = "none"
         if not scene["narration"]:
             raise RuntimeError(f"Empty narration scene {i + 1}")
         if not scene["on_screen"]:
             scene["on_screen"] = scene["narration"][:55]
         if not scene["visual_prompt"]:
             raise RuntimeError(f"Empty visual prompt scene {i + 1}")
+    total_words = sum(len(scene["narration"].split()) for scene in scenes)
+    if not 108 <= total_words <= 128:
+        raise RuntimeError(f"Narration word count {total_words}; expected 108-128")
     return data
 
 
@@ -319,38 +329,38 @@ def create_typography_scene(topic, scene, index):
     source = make_base_visual(topic, scene, index)
     base = Image.open(source).convert("RGB")
     paths = []
-    for frame_index in range(18):
-        scale = 1.0 + 0.045 * (frame_index / 17)
+    for fi in range(18):
+        scale = 1.0 + 0.045 * (fi / 17)
         crop_w = int(WIDTH / scale)
         crop_h = int(HEIGHT / scale)
-        left = int((WIDTH - crop_w) * (0.15 + 0.70 * frame_index / 17))
-        top = int((HEIGHT - crop_h) * (0.55 - 0.35 * frame_index / 17))
+        left = int((WIDTH - crop_w) * (0.15 + 0.70 * fi / 17))
+        top = int((HEIGHT - crop_h) * (0.55 - 0.35 * fi / 17))
         left = max(0, min(WIDTH - crop_w, left))
         top = max(0, min(HEIGHT - crop_h, top))
         frame = base.crop((left, top, left + crop_w, top + crop_h)).resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
-        frame = overlay_frame(frame, scene["on_screen"], scene["narration"], index, (frame_index + 1) / 18)
-        path = folder / f"frame_{frame_index:02d}.jpg"
+        frame = overlay_frame(frame, scene["on_screen"], scene["narration"], index, (fi + 1) / 18)
+        path = folder / f"frame_{fi:02d}.jpg"
         frame.save(path, quality=90, optimize=True)
         paths.append(path)
-    return {"frames": [str(p) for p in paths]}
+    return {"frames": [str(x) for x in paths]}
 
 
 def create_video(scene_info):
     clips = []
     for i, info in enumerate(scene_info):
         clip = OUTPUT / f"clip_{i:02d}.mp4"
-        listing = OUTPUT / f"frames_{i:02d}.txt"
+        txt = OUTPUT / f"typing_{i:02d}.txt"
         lines = []
-        for path in info["frames"]:
-            lines += [f"file '{Path(path).as_posix()}'", "duration 0.10"]
-        lines += [f"file '{Path(info['frames'][-1]).as_posix()}'", f"duration {SCENE_DURATION - 1.8:.3f}", f"file '{Path(info['frames'][-1]).as_posix()}'"]
-        listing.write_text("\n".join(lines), encoding="utf-8")
-        run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listing), "-vf", "fps=30,format=yuv420p", "-t", str(SCENE_DURATION), "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", str(clip)])
+        for p in info["frames"]:
+            lines += [f"file '{Path(p).as_posix()}'", "duration 0.10"]
+        lines += [f"file '{Path(info['frames'][-1]).as_posix()}'", f"duration {SCENE_DURATION-1.8:.3f}", f"file '{Path(info['frames'][-1]).as_posix()}'"]
+        txt.write_text("\n".join(lines), encoding="utf-8")
+        run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(txt), "-vf", "fps=30,format=yuv420p", "-t", str(SCENE_DURATION), "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", str(clip)])
         clips.append(clip)
-    concat = OUTPUT / "concat.txt"
-    concat.write_text("\n".join(f"file '{p.as_posix()}'" for p in clips), encoding="utf-8")
+    alltxt = OUTPUT / "concat.txt"
+    alltxt.write_text("\n".join(f"file '{p.as_posix()}'" for p in clips), encoding="utf-8")
     silent = OUTPUT / "video_silent.mp4"
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(silent)])
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(alltxt), "-c", "copy", str(silent)])
     return silent
 
 
@@ -360,29 +370,96 @@ def create_voice(text):
     return out
 
 
+def create_scene_voice(text, index):
+    out = AUDIO / f"voice_{index:02d}.mp3"
+    run(["edge-tts", "--voice", VOICE, "--rate", TTS_RATE, "--text", safe_ascii(text, 700), "--write-media", str(out)])
+    return out
+
+
 def create_music():
     out = AUDIO / "music.m4a"
-    run(["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=110:sample_rate=44100", "-f", "lavfi", "-i", "sine=frequency=165:sample_rate=44100", "-t", "60", "-filter_complex", "[0:a]volume=0.025[a];[1:a]volume=0.012[b];[a][b]amix=inputs=2:duration=first", "-c:a", "aac", "-b:a", "128k", str(out)])
+    run(["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=110:sample_rate=44100", "-f", "lavfi", "-i", "sine=frequency=165:sample_rate=44100", "-t", str(DURATION), "-filter_complex", "[0:a]volume=0.030[a];[1:a]volume=0.014[b];[a][b]amix=inputs=2:duration=first,afade=t=in:st=0:d=2,afade=t=out:st=55:d=5", "-c:a", "aac", "-b:a", "128k", str(out)])
     return out
 
 
-def create_sound_design():
-    out = AUDIO / "sfx.m4a"
-    run(["ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=color=pink:amplitude=0.004:sample_rate=44100", "-t", "60", "-c:a", "aac", "-b:a", "96k", str(out)])
+SFX_TYPES = {
+    "none": None,
+    "airplane": "anoisesrc=color=white:amplitude=0.035:sample_rate=44100,lowpass=f=2600,highpass=f=120",
+    "bird": "aevalsrc=0.055*sin(2*PI*(900+700*sin(2*PI*0.8*t))*t)*exp(-0.55*mod(t,0.9)):s=44100:d=7.5",
+    "sand": "anoisesrc=color=brown:amplitude=0.025:sample_rate=44100,highpass=f=180,lowpass=f=4200",
+    "wind": "anoisesrc=color=pink:amplitude=0.028:sample_rate=44100,lowpass=f=1400,highpass=f=90",
+    "storm": "anoisesrc=color=brown:amplitude=0.035:sample_rate=44100,lowpass=f=900",
+    "thunder": "anoisesrc=color=brown:amplitude=0.045:sample_rate=44100,lowpass=f=500",
+    "ocean": "anoisesrc=color=pink:amplitude=0.026:sample_rate=44100,lowpass=f=1800,highpass=f=70",
+    "water": "anoisesrc=color=white:amplitude=0.018:sample_rate=44100,lowpass=f=5000,highpass=f=500",
+    "fire": "anoisesrc=color=white:amplitude=0.020:sample_rate=44100,highpass=f=1000,lowpass=f=6500",
+    "city": "anoisesrc=color=pink:amplitude=0.018:sample_rate=44100,lowpass=f=3200,highpass=f=100",
+    "impact": "anoisesrc=color=brown:amplitude=0.055:sample_rate=44100,lowpass=f=700",
+    "rocket": "anoisesrc=color=brown:amplitude=0.055:sample_rate=44100,lowpass=f=1100,highpass=f=45",
+    "space": "sine=frequency=70:sample_rate=44100",
+    "heartbeat": "sine=frequency=65:sample_rate=44100",
+    "whoosh": "anoisesrc=color=white:amplitude=0.035:sample_rate=44100,lowpass=f=3000,highpass=f=250",
+    "rumble": "anoisesrc=color=brown:amplitude=0.045:sample_rate=44100,lowpass=f=300"
+}
+
+
+def create_scene_sfx(sfx_type, index):
+    out = AUDIO / f"sfx_{index:02d}.m4a"
+    source = SFX_TYPES.get(sfx_type) or SFX_TYPES["none"]
+    if source is None:
+        run(["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", str(SCENE_DURATION), "-c:a", "aac", "-b:a", "96k", str(out)])
+        return out
+    filter_chain = f"{source},volume=0.55,afade=t=in:st=0:d=0.25,afade=t=out:st=6.8:d=0.7"
+    run(["ffmpeg", "-y", "-f", "lavfi", "-i", source, "-t", str(SCENE_DURATION), "-af", filter_chain, "-ac", "2", "-c:a", "aac", "-b:a", "96k", str(out)])
     return out
 
 
-def mix_audio(video, narration, music, sfx):
+def fit_audio_to_scene(input_path, output_path):
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(input_path)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    try:
+        duration = float(probe.stdout.strip())
+    except Exception:
+        duration = SCENE_DURATION
+    speed = max(1.0, duration / SCENE_DURATION)
+    filters = []
+    while speed > 2.0:
+        filters.append("atempo=2.0")
+        speed /= 2.0
+    filters.append(f"atempo={speed:.5f}" if speed > 1.001 else "anull")
+    filters.append(f"apad=pad_dur={SCENE_DURATION}")
+    filters.append(f"atrim=duration={SCENE_DURATION}")
+    run(["ffmpeg", "-y", "-i", str(input_path), "-af", ",".join(filters), "-ar", "44100", "-ac", "2", "-c:a", "aac", "-b:a", "128k", str(output_path)])
+    return output_path
+
+
+def create_scene_audio(story):
+    scene_clips = []
+    for i, scene in enumerate(story["scenes"]):
+        raw_voice = create_scene_voice(scene["narration"], i)
+        voice = AUDIO / f"voice_fit_{i:02d}.m4a"
+        fit_audio_to_scene(raw_voice, voice)
+        sfx = create_scene_sfx(scene.get("sfx_type", "none"), i)
+        mixed = AUDIO / f"scene_mix_{i:02d}.m4a"
+        run(["ffmpeg", "-y", "-i", str(voice), "-i", str(sfx), "-filter_complex", "[0:a]volume=1.12[v];[1:a]volume=0.12[s];[v][s]amix=inputs=2:duration=longest:dropout_transition=0.25,alimiter=limit=0.92[a]", "-map", "[a]", "-t", str(SCENE_DURATION), "-c:a", "aac", "-b:a", "160k", str(mixed)])
+        scene_clips.append(mixed)
+    concat = AUDIO / "scene_audio_concat.txt"
+    concat.write_text("\n".join(f"file '{p.as_posix()}'" for p in scene_clips), encoding="utf-8")
+    out = AUDIO / "scene_narration_sfx.m4a"
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c:a", "aac", "-b:a", "160k", str(out)])
+    return out
+
+
+def mix_audio(video, narration_sfx, music):
     audio = AUDIO / "final_audio.m4a"
-    run(["ffmpeg", "-y", "-i", str(narration), "-i", str(music), "-i", str(sfx), "-filter_complex", "[0:a]volume=1.12[n];[1:a]volume=0.70[m];[2:a]volume=0.25[s];[n][m][s]amix=inputs=3:duration=longest:dropout_transition=2,alimiter=limit=0.9[a]", "-map", "[a]", "-t", "60", "-c:a", "aac", "-b:a", "192k", str(audio)])
+    run(["ffmpeg", "-y", "-i", str(narration_sfx), "-i", str(music), "-filter_complex", "[0:a]volume=1.0[n];[1:a]volume=0.55[m];[n][m]amix=inputs=2:duration=first:dropout_transition=2,alimiter=limit=0.9[a]", "-map", "[a]", "-t", str(DURATION), "-c:a", "aac", "-b:a", "192k", str(audio)])
     run(["ffmpeg", "-y", "-i", str(video), "-i", str(audio), "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", str(VIDEO)])
     return VIDEO
 
 
 def save_metadata(story):
     title = safe_ascii(story.get("title", "WHAT IF DAILY"), 95)
-    description = safe_ascii(story.get("description", ""), 4500) + "\n\nWHAT IF DAILY - IMAGINE. WATCH. WONDER.\n\nVisual format: cinematic scientific visualization + kinetic typography."
-    data = {"title": title, "description": description, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography"}
+    desc = safe_ascii(story.get("description", ""), 4500) + "\n\nWHAT IF DAILY - IMAGINE. WATCH. WONDER.\n\nVisual format: cinematic scientific visualization with kinetic typography."
+    data = {"title": title, "description": desc, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography"}
     METADATA.write_text(json.dumps(data, indent=2), encoding="utf-8")
     return data
 
@@ -392,36 +469,35 @@ def upload_youtube(meta):
     if not raw:
         print("YOUTUBE_OAUTH_JSON missing; skipping upload")
         return
-    data = json.loads(raw)
-    credentials = Credentials(None, refresh_token=data["refresh_token"], token_uri="https://oauth2.googleapis.com/token", client_id=data["client_id"], client_secret=data["client_secret"], scopes=["https://www.googleapis.com/auth/youtube.upload"])
-    youtube = build("youtube", "v3", credentials=credentials)
-    description = safe_ascii(meta["description"], 4900)
-    hashtags = meta.get("hashtags", [])
-    if hashtags:
-        description += "\n\n" + " ".join(hashtags)
-    body = {"snippet": {"title": meta["title"], "description": description, "tags": meta.get("keywords", [])[:25], "categoryId": "28"}, "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}}
+    d = json.loads(raw)
+    creds = Credentials(None, refresh_token=d["refresh_token"], token_uri="https://oauth2.googleapis.com/token", client_id=d["client_id"], client_secret=d["client_secret"], scopes=["https://www.googleapis.com/auth/youtube.upload"])
+    yt = build("youtube", "v3", credentials=creds)
+    desc = safe_ascii(meta["description"], 4900)
+    tags = meta.get("hashtags", [])
+    if tags:
+        desc += "\n\n" + " ".join(tags)
+    body = {"snippet": {"title": meta["title"], "description": desc, "tags": meta.get("keywords", [])[:25], "categoryId": "28"}, "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}}
     print("Uploading to YouTube:", body["snippet"]["title"])
-    request = youtube.videos().insert(part="snippet,status", body=body, media_body=MediaFileUpload(str(VIDEO), mimetype="video/mp4", resumable=True))
-    result = request.execute()
+    req = yt.videos().insert(part="snippet,status", body=body, media_body=MediaFileUpload(str(VIDEO), mimetype="video/mp4", resumable=True))
+    result = req.execute()
     print("YouTube upload complete:", result.get("id"))
 
 
 def main():
     clean()
-    manual_topic = os.getenv("WHAT_IF_TOPIC", "").strip()
-    topic = manual_topic or generate_unique_topic()
+    manual = os.getenv("WHAT_IF_TOPIC", "").strip()
+    topic = manual or generate_unique_topic()
     print("Topic:", topic)
     print("Voice:", VOICE, "Rate:", TTS_RATE)
     print("Visuals enabled:", VISUALS_ENABLED, "Cloudflare configured:", bool(CF_TOKEN and CF_ACCOUNT))
     story = create_story(topic)
-    scenes = [create_typography_scene(topic, scene, i) for i, scene in enumerate(story["scenes"])]
-    narration = create_voice(" ".join(scene["narration"] for scene in story["scenes"]))
+    infos = [create_typography_scene(topic, s, i) for i, s in enumerate(story["scenes"])]
+    narration_sfx = create_scene_audio(story)
     music = create_music()
-    sfx = create_sound_design()
-    silent = create_video(scenes)
-    mix_audio(silent, narration, music, sfx)
-    metadata = save_metadata(story)
-    upload_youtube(metadata)
+    silent = create_video(infos)
+    mix_audio(silent, narration_sfx, music)
+    meta = save_metadata(story)
+    upload_youtube(meta)
     print("DONE:", VIDEO)
 
 
