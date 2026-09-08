@@ -1,16 +1,91 @@
 {
-  "version": 1,
+  "version": 3,
   "channel": "WHAT IF DAILY",
-  "audience": "global English-speaking Shorts viewers",
-  "baseline_schedule": {
-    "slot_0": "19:00 Asia/Kolkata",
-    "slot_1": "22:30 Asia/Kolkata",
-    "frequency": "2 Shorts per day",
-    "test_window_days": 21
-  },
+  "generated_at": "2026-09-08T20:02:59.268273+00:00",
+  "confidence": "high",
+  "data_points": 24,
+  "analytics_source": "youtube_analytics_api",
+  "overall_summary": "Analysis of 24 Shorts reveals strong audience engagement and retention around planetary-scale astrophysics and fundamental physics alters (e.g., 'Earth Had Rings Like Saturn' reaching 1,031 views and 51.26% avg view percentage). Micro-scale or invisible sensory scenarios (e.g., 'See Every Wi-Fi Signal' with 2 views) underperform significantly. High early retention curves (>1.0 audience watch ratio at start) correlate directly with overall view counts.",
+  "what_is_working": [
+    {
+      "pattern": "Planetary & Macro Physics Disruption Topics",
+      "evidence": "'What If Earth Had Rings Like Saturn?' generated 1,031 views, 51.26% average view percentage, and 1.33 initial audience watch ratio. 'What If Earth Lost Its Atmosphere for 5 Seconds?' achieved 835 views.",
+      "action": "Focus content production heavily on global, high-stakes astronomical and physics transformations."
+    },
+    {
+      "pattern": "High Initial Hook Intensity leading to Rewatches",
+      "evidence": "Top performing video ('Earth Had Rings Like Saturn') achieved an audience watch ratio of 1.3353 at 1% progress, maintaining 0.4412 at 49% progress.",
+      "action": "Maintain high visual impact in frames 0-2 to trigger immediate looping and rewatches."
+    }
+  ],
+  "what_to_improve": [
+    {
+      "pattern": "Abstract / Invisible Phenomena Topics",
+      "evidence": "'What If You Could See Every Wi-Fi Signal?' received 2 views; 'What If Water Turned Into Liquid Mercury?' generated only 19 views.",
+      "action": "Avoid abstract or non-visual hypothetical topics in favor of immediate dramatic visual changes."
+    },
+    {
+      "pattern": "Immediate First-3-Second Drop-off on Pacing Flaws",
+      "evidence": "'What If Rain Fell at the Speed of a Bullet?' dropped from 1.0513 watch ratio at 1% to 0.1220 at 5% progress, resulting in only 23.79% average view percentage.",
+      "action": "Deliver the core visual transformation within the first second to prevent initial scroll-away."
+    }
+  ],
+  "retention_insights": [
+    {
+      "video_pattern": "Immediate High-Impact Visual Hook (Earth Had Rings)",
+      "drop_or_strength": "Strong hold zone starting above 1.0 watch ratio (1.3353 at 0.01 progress) and holding 0.4412 at 0.49 progress.",
+      "evidence": "Average view percentage hit 51.26% with 31 seconds average view duration.",
+      "action": "Replicate the immediate visual transformation layout used in the Saturn rings video across future Shorts."
+    },
+    {
+      "video_pattern": "Slow Visual Payoff (Rain at Speed of a Bullet)",
+      "drop_or_strength": "Severe early drop off, plummeting to relative retention of 0.0494 at 0.23 progress.",
+      "evidence": "Average view percentage reached only 23.79% with 14 seconds average view duration.",
+      "action": "Shorten intro text/narration and show the action/consequence immediately upon video start."
+    }
+  ],
+  "best_posting_windows": [
+    {
+      "hour_utc": 4,
+      "minute_utc": 55,
+      "window": "04:55 UTC",
+      "reason": "Top performer 'What If Earth Had Rings Like Saturn?' (1,031 views, 51.26% view percentage) was published at 04:56 UTC, and 'What If Sound Could Travel Through Space?' (626 views) at 04:47 UTC.",
+      "confidence": "high"
+    },
+    {
+      "hour_utc": 12,
+      "minute_utc": 8,
+      "window": "12:08 UTC",
+      "reason": "'What If Earth Lost Its Atmosphere for 5 Seconds?' achieved 835 views when posted at 12:08 UTC.",
+      "confidence": "medium"
+    }
+  ],
+  "next_best_topics": [
+    {
+      "priority": 1,
+      "topic": "What If Earth's Core Instantly Cooled Down?",
+      "hook": "What if the fiery generator at the center of Earth suddenly froze solid?",
+      "reason": "Aligns with proven interest in planetary survival and magnetic/geological disruption topics.",
+      "confidence": "high"
+    },
+    {
+      "priority": 2,
+      "topic": "What If Gravity Was Twice as Strong for 10 Seconds?",
+      "hook": "What if everything on Earth suddenly weighed double for ten seconds?",
+      "reason": "Similar to the successful 'Gravity Pulled Sideways' concept (418 views) which showed strong relative retention.",
+      "confidence": "high"
+    },
+    {
+      "priority": 3,
+      "topic": "What If the Oceans Lost All Salt Overnight?",
+      "hook": "What if every ocean on Earth instantly turned into fresh water?",
+      "reason": "High visual and ecological stakes that appeal to universal curiosity without being abstract.",
+      "confidence": "medium"
+    }
+  ],
   "ranking_objective": {
     "curiosity": 0.25,
-    "broad_appeal": 0.20,
+    "broad_appeal": 0.2,
     "visual_impact": 0.18,
     "retention_potential": 0.17,
     "comment_debate": 0.08,
@@ -20,45 +95,31 @@
   "slots": {
     "0": {
       "name": "Universal Curiosity",
-      "best_lanes": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
-      "topics": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
-      "style": "instantly understandable, surprising, relatable, visual",
-      "avoid": ["narrow academic topics", "long setup", "obscure terminology"]
+      "best_lanes": [
+        "Planetary Physics",
+        "Global Atmospheric Events"
+      ],
+      "style": "Fast-paced visual transformation with immediate stakes in the first 2 seconds."
     },
     "1": {
       "name": "Extreme Future",
-      "best_lanes": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
-      "topics": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
-      "style": "high stakes, escalating consequences, cinematic, debate-worthy",
-      "avoid": ["repeating slot 0 topic", "generic facts", "pure speculation without scientific grounding"]
-    },
-    "slot_0": {
-      "name": "Universal Curiosity",
-      "best_lanes": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
-      "topics": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
-      "style": "instantly understandable, surprising, relatable, visual"
-    },
-    "slot_1": {
-      "name": "Extreme Future",
-      "best_lanes": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
-      "topics": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
-      "style": "high stakes, escalating consequences, cinematic, debate-worthy"
+      "best_lanes": [
+        "Cosmic Disruption",
+        "Fundamental Law Alterations"
+      ],
+      "style": "Cinematic visual simulations of fundamental physical constants shifting."
     }
   },
-  "topic_rules": [
-    "Start with a simple What If question.",
-    "Prefer topics that a 12-year-old and an adult can both understand immediately.",
-    "Create a strong visual transformation in the first scene.",
-    "Build consequences scene by scene and end with a surprising payoff.",
-    "Prefer human-scale or planet-scale stakes over abstract science.",
-    "Do not repeat the same core phenomenon within the recent topic history.",
-    "Favor evergreen curiosity topics; use current trends only when they naturally fit the science niche.",
-    "Never sacrifice scientific plausibility just to chase a trend."
+  "avoid_or_limit": [
+    {
+      "item": "Abstract or invisible sensory alterations (e.g. Wi-Fi signals, chemical subtle shifts)",
+      "reason": "Low visual impact leads to near-zero views (2-19 views range)."
+    },
+    {
+      "item": "Duplicate re-uploads within seconds/minutes",
+      "reason": "Identical titles uploaded seconds apart show massive view suppression on the duplicate (e.g., 365 views vs 10 views)."
+    }
   ],
-  "learning_rules": {
-    "primary_metrics": ["viewed_vs_swiped", "average_percentage_viewed", "engaged_views", "likes", "comments", "subscribers_gained"],
-    "secondary_metrics": ["views_24h", "views_7d", "returning_viewers"],
-    "decision_rule": "After enough data, shift more topics toward the lanes and slots that consistently outperform the channel median, while keeping controlled experiments running.",
-    "minimum_experiment": "Do not change the whole strategy after one viral or weak Short; use repeated results across comparable videos."
-  }
+  "owner_analytics_videos": 15,
+  "retention_videos": 8
 }

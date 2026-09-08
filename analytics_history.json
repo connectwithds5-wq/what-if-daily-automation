@@ -1,0 +1,1003 @@
+{
+  "updated_at": "2026-09-08T20:02:36.661468+00:00",
+  "analytics_source": "youtube_analytics_api",
+  "videos": [
+    {
+      "video_id": "rQ8N-hUB4SM",
+      "title": "What If A Second Sun Entered Our Solar System?",
+      "published_at": "2026-09-08T17:16:16Z",
+      "views": 68,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT59S"
+    },
+    {
+      "video_id": "ELXgl8xz-wE",
+      "title": "What If You Could See Every Wi-Fi Signal?",
+      "published_at": "2026-09-08T14:12:39Z",
+      "views": 2,
+      "likes": 0,
+      "comments": 0,
+      "duration": "PT59S"
+    },
+    {
+      "video_id": "7thBkWfXx20",
+      "title": "What If Earth's Atmosphere Turned Neon Pink?",
+      "published_at": "2026-09-08T12:46:20Z",
+      "views": 87,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT1M1S"
+    },
+    {
+      "video_id": "as8bNSvrk78",
+      "title": "What If All Clouds Turned to Solid Ice?",
+      "published_at": "2026-09-08T10:13:47Z",
+      "views": 130,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT1M1S"
+    },
+    {
+      "video_id": "p2vbKrqcVvo",
+      "title": "What If All Sand Turned to Glass?",
+      "published_at": "2026-09-08T09:04:14Z",
+      "views": 18,
+      "likes": 0,
+      "comments": 0,
+      "duration": "PT1M1S"
+    },
+    {
+      "video_id": "DokAM9ig7L0",
+      "title": "What If Earth Stopped For One Second?",
+      "published_at": "2026-09-08T07:45:00Z",
+      "views": 298,
+      "likes": 5,
+      "comments": 2,
+      "duration": "PT1M1S"
+    },
+    {
+      "video_id": "OKz2LOxi0C0",
+      "title": "What If All Lightning Struck At The Same Second?",
+      "published_at": "2026-09-07T17:09:33Z",
+      "views": 263,
+      "likes": 2,
+      "comments": 0,
+      "duration": "PT1M1S"
+    },
+    {
+      "video_id": "oMs1yyS8hn4",
+      "title": "What If Oceans Froze From the Bottom Up?",
+      "published_at": "2026-09-07T13:41:42Z",
+      "views": 183,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT1M1S"
+    },
+    {
+      "video_id": "KOaRpTBNAJY",
+      "title": "What If Earth Lost Its Atmosphere for 5 Seconds?",
+      "published_at": "2026-09-07T12:08:01Z",
+      "views": 835,
+      "likes": 18,
+      "comments": 0,
+      "duration": "PT1M1S"
+    },
+    {
+      "video_id": "qhCPG8tTES0",
+      "title": "What If Sound Could Travel Through Space?",
+      "published_at": "2026-09-07T04:47:00Z",
+      "views": 626,
+      "likes": 11,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 118,
+        "estimatedMinutesWatched": 24,
+        "averageViewDuration": 24,
+        "averageViewPercentage": 40.94,
+        "likes": 2,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      }
+    },
+    {
+      "video_id": "OXF1sFqhwUs",
+      "title": "What If Water Lost All Surface Tension?",
+      "published_at": "2026-09-06T18:24:44Z",
+      "views": 175,
+      "likes": 2,
+      "comments": 2,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 114,
+        "estimatedMinutesWatched": 15,
+        "averageViewDuration": 25,
+        "averageViewPercentage": 41.29,
+        "likes": 1,
+        "comments": 1,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.1471,
+          "relative_retention": 0.5308
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.1471,
+          "relative_retention": 0.479
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.1471,
+          "relative_retention": 0.4287
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.1471,
+          "relative_retention": 0.3871
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.1176,
+          "relative_retention": 0.352
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.0882,
+          "relative_retention": 0.3185
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.0882,
+          "relative_retention": 0.285
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.2529
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.2247
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 0.9412,
+          "relative_retention": 0.2017
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.5588,
+          "relative_retention": 0.1152
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.5294,
+          "relative_retention": 0.114
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.5294,
+          "relative_retention": 0.1127
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.5294,
+          "relative_retention": 0.1106
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.2941,
+          "relative_retention": 0.0621
+        }
+      ]
+    },
+    {
+      "video_id": "90wNMkL6-3k",
+      "title": "What If Earth Suddenly Grew Massive Saturn-Like Rings?",
+      "published_at": "2026-09-06T13:38:11Z",
+      "views": 603,
+      "likes": 5,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 507,
+        "estimatedMinutesWatched": 48,
+        "averageViewDuration": 17,
+        "averageViewPercentage": 28.7,
+        "likes": 2,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 1,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.1214,
+          "relative_retention": 0.4516
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.0857,
+          "relative_retention": 0.3887
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.0786,
+          "relative_retention": 0.3327
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.0786,
+          "relative_retention": 0.2955
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.0786,
+          "relative_retention": 0.276
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.0714,
+          "relative_retention": 0.2673
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.0714,
+          "relative_retention": 0.2646
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 1.0286,
+          "relative_retention": 0.2655
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 0.9429,
+          "relative_retention": 0.2689
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 0.8214,
+          "relative_retention": 0.2742
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.3571,
+          "relative_retention": 0.4173
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.3286,
+          "relative_retention": 0.4263
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.3071,
+          "relative_retention": 0.4345
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.3071,
+          "relative_retention": 0.4419
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.1857,
+          "relative_retention": 0.499
+        }
+      ]
+    },
+    {
+      "video_id": "8awavalTko8",
+      "title": "What If Rain Fell at the Speed of a Bullet?",
+      "published_at": "2026-09-06T12:44:53Z",
+      "views": 191,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 135,
+        "estimatedMinutesWatched": 11,
+        "averageViewDuration": 14,
+        "averageViewPercentage": 23.79,
+        "likes": 0,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.0513,
+          "relative_retention": 0.2977
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.0513,
+          "relative_retention": 0.2355
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.1801
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.1429
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.122
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.1108
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.1044
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 0.9487,
+          "relative_retention": 0.1009
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 0.8205,
+          "relative_retention": 0.0992
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 0.7692,
+          "relative_retention": 0.0984
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.2821,
+          "relative_retention": 0.0494
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.2821,
+          "relative_retention": 0.0481
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.2564,
+          "relative_retention": 0.0477
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.2564,
+          "relative_retention": 0.0477
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.1282,
+          "relative_retention": 0.0748
+        }
+      ]
+    },
+    {
+      "video_id": "thQVx7L6IaI",
+      "title": "What If Earth's Oxygen Levels Instantly Doubled?",
+      "published_at": "2026-09-06T08:41:30Z",
+      "views": 38,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 36,
+        "estimatedMinutesWatched": 2,
+        "averageViewDuration": 19,
+        "averageViewPercentage": 31.759999999999998,
+        "likes": 1,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      }
+    },
+    {
+      "video_id": "asUMkydQPP0",
+      "title": "What If a Rogue Planet Passed Between Earth and the Moon?",
+      "published_at": "2026-09-05T13:36:09Z",
+      "views": 54,
+      "likes": 0,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 54,
+        "estimatedMinutesWatched": 6,
+        "averageViewDuration": 17,
+        "averageViewPercentage": 29.09,
+        "likes": 0,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.2054
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.1535
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.11
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.0843
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.0734
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.0697
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.0,
+          "relative_retention": 0.0682
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 0.9474,
+          "relative_retention": 0.0671
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 0.8421,
+          "relative_retention": 0.0661
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 0.7368,
+          "relative_retention": 0.065
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.4737,
+          "relative_retention": 0.0494
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.4737,
+          "relative_retention": 0.0494
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.4737,
+          "relative_retention": 0.0492
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.4737,
+          "relative_retention": 0.0492
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.1579,
+          "relative_retention": 0.0613
+        }
+      ]
+    },
+    {
+      "video_id": "IdjHvpfFPEk",
+      "title": "What If Gravity Pulled Sideways for 10 Seconds?",
+      "published_at": "2026-09-05T10:07:37Z",
+      "views": 418,
+      "likes": 2,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 416,
+        "estimatedMinutesWatched": 73,
+        "averageViewDuration": 21,
+        "averageViewPercentage": 34.47,
+        "likes": 2,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 1,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.0718,
+          "relative_retention": 0.3846
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.0718,
+          "relative_retention": 0.3286
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.0667,
+          "relative_retention": 0.2805
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.0667,
+          "relative_retention": 0.251
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.0667,
+          "relative_retention": 0.2382
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.0667,
+          "relative_retention": 0.2349
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.0667,
+          "relative_retention": 0.236
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 1.0359,
+          "relative_retention": 0.2396
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 0.9949,
+          "relative_retention": 0.2446
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 0.9077,
+          "relative_retention": 0.2507
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.4923,
+          "relative_retention": 0.3475
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.4769,
+          "relative_retention": 0.3558
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.4564,
+          "relative_retention": 0.3644
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.4359,
+          "relative_retention": 0.3731
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.2205,
+          "relative_retention": 0.4948
+        }
+      ]
+    },
+    {
+      "video_id": "2keztiuOLlQ",
+      "title": "What If the Speed of Light Dropped to the Speed of Sound?",
+      "published_at": "2026-09-05T09:35:24Z",
+      "views": 548,
+      "likes": 11,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 545,
+        "estimatedMinutesWatched": 136,
+        "averageViewDuration": 24,
+        "averageViewPercentage": 40.89,
+        "likes": 10,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.0895,
+          "relative_retention": 0.434
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.0863,
+          "relative_retention": 0.3861
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.0831,
+          "relative_retention": 0.3448
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.0831,
+          "relative_retention": 0.3191
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.0895,
+          "relative_retention": 0.3069
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.0863,
+          "relative_retention": 0.3024
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.0863,
+          "relative_retention": 0.3011
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 1.0671,
+          "relative_retention": 0.3014
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 1.0288,
+          "relative_retention": 0.3029
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 0.984,
+          "relative_retention": 0.305
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.6294,
+          "relative_retention": 0.3149
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.6198,
+          "relative_retention": 0.3155
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.5974,
+          "relative_retention": 0.3175
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.5847,
+          "relative_retention": 0.3209
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.3035,
+          "relative_retention": 0.4546
+        }
+      ]
+    },
+    {
+      "video_id": "ceUk5SLSLkg",
+      "title": "What If a Coin-Sized Black Hole Appeared on Earth?",
+      "published_at": "2026-09-05T08:36:46Z",
+      "views": 177,
+      "likes": 2,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 172,
+        "estimatedMinutesWatched": 25,
+        "averageViewDuration": 18,
+        "averageViewPercentage": 30.990000000000002,
+        "likes": 2,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.0822,
+          "relative_retention": 0.3828
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.0685,
+          "relative_retention": 0.3231
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.0548,
+          "relative_retention": 0.2702
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.0548,
+          "relative_retention": 0.2354
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.0548,
+          "relative_retention": 0.2173
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.0548,
+          "relative_retention": 0.2087
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.0548,
+          "relative_retention": 0.2045
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 1.0274,
+          "relative_retention": 0.2017
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 0.9178,
+          "relative_retention": 0.199
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 0.9041,
+          "relative_retention": 0.1954
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.4658,
+          "relative_retention": 0.2018
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.4658,
+          "relative_retention": 0.2067
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.4521,
+          "relative_retention": 0.2119
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.4384,
+          "relative_retention": 0.2175
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.2055,
+          "relative_retention": 0.2812
+        }
+      ]
+    },
+    {
+      "video_id": "KxodhyyUpIM",
+      "title": "What If Water Turned Into Liquid Mercury?",
+      "published_at": "2026-09-05T08:21:07Z",
+      "views": 19,
+      "likes": 0,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 15,
+        "estimatedMinutesWatched": 2,
+        "averageViewDuration": 26,
+        "averageViewPercentage": 43.68,
+        "likes": 0,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      }
+    },
+    {
+      "video_id": "cAOT_hC5G8c",
+      "title": "What If Earth Had Rings Like Saturn?",
+      "published_at": "2026-09-05T04:56:06Z",
+      "views": 1031,
+      "likes": 16,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 1015,
+        "estimatedMinutesWatched": 257,
+        "averageViewDuration": 31,
+        "averageViewPercentage": 51.25999999999999,
+        "likes": 15,
+        "comments": 0,
+        "shares": 1,
+        "subscribersGained": 1,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.3353,
+          "relative_retention": 0.6293
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.3324,
+          "relative_retention": 0.5746
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.3265,
+          "relative_retention": 0.5284
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.3206,
+          "relative_retention": 0.501
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.3147,
+          "relative_retention": 0.4894
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.3029,
+          "relative_retention": 0.4859
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.2971,
+          "relative_retention": 0.4854
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 1.2559,
+          "relative_retention": 0.4859
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 1.2059,
+          "relative_retention": 0.4873
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 1.0971,
+          "relative_retention": 0.489
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.6853,
+          "relative_retention": 0.4993
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.6794,
+          "relative_retention": 0.4993
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.6735,
+          "relative_retention": 0.4992
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.6559,
+          "relative_retention": 0.4992
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.4412,
+          "relative_retention": 0.4993
+        }
+      ]
+    },
+    {
+      "video_id": "ass1B5DEkKI",
+      "title": "What If Earth Had Rings Like Saturn?",
+      "published_at": "2026-09-05T04:55:51Z",
+      "views": 544,
+      "likes": 10,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 553,
+        "estimatedMinutesWatched": 91,
+        "averageViewDuration": 23,
+        "averageViewPercentage": 38.85,
+        "likes": 10,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 1,
+        "subscribersLost": 0
+      }
+    },
+    {
+      "video_id": "FVbZV-dFI0I",
+      "title": "What If Earth Lost Its Magnetic Field?",
+      "published_at": "2026-09-04T19:39:48Z",
+      "views": 365,
+      "likes": 3,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 365,
+        "estimatedMinutesWatched": 24,
+        "averageViewDuration": 13,
+        "averageViewPercentage": 22.43,
+        "likes": 3,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 1,
+        "subscribersLost": 0
+      }
+    },
+    {
+      "video_id": "UaEfTVer3J4",
+      "title": "What If Earth Lost Its Magnetic Field?",
+      "published_at": "2026-09-04T19:39:37Z",
+      "views": 10,
+      "likes": 0,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 8,
+        "estimatedMinutesWatched": 46,
+        "averageViewDuration": 933,
+        "averageViewPercentage": 1530.91,
+        "likes": 0,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      }
+    },
+    {
+      "video_id": "4uTSu1sDStM",
+      "title": "What If Earth Never Had A Moon?",
+      "published_at": "2026-09-04T18:58:31Z",
+      "views": 342,
+      "likes": 3,
+      "comments": 0,
+      "duration": "PT1M1S",
+      "owner_analytics": {
+        "views": 344,
+        "estimatedMinutesWatched": 52,
+        "averageViewDuration": 19,
+        "averageViewPercentage": 31.45,
+        "likes": 3,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      }
+    }
+  ]
+}
