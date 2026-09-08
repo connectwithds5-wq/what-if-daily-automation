@@ -25,7 +25,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_IMAGE_MODEL: "@cf/black-forest-labs/flux-1-schnell"
       CLOUDFLARE_IMAGE_FALLBACK_MODEL: "@cf/bytedance/stable-diffusion-xl-lightning"
-      VISUALS_ENABLED: "false"
+      VISUALS_ENABLED: "true"
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
       RUN_SLOT: ${{ github.event.schedule == '30 13 * * *' && '0' || '1' }}
       PYTHONUNBUFFERED: "1"
@@ -56,24 +56,15 @@ jobs:
           test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
           echo "Required secrets for text/TTS/upload are present."
           if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "Cloudflare configured, but visual generation is intentionally disabled for this run."
+            echo "Cloudflare configured as visual fallback."
           else
-            echo "Cloudflare visual credentials unavailable; black fallback mode is active."
+            echo "Cloudflare visual fallback credentials unavailable; Gemini image generation will be primary."
           fi
 
       - name: Normalize production source
         run: |
           python scripts/normalize_production.py
           python scripts/install_visual_qc.py
-          # Image providers are intentionally disabled for now. Keep the generated
-          # black cinematic fallback valid for the final production QC/upload gate.
-          python - <<'PY'
-          from pathlib import Path
-          p = Path("src/what_if_daily_v2.py")
-          s = p.read_text(encoding="utf-8")
-          s = s.replace("if generated < 6:", "if generated < 0:")
-          p.write_text(s, encoding="utf-8")
-          PY
           git diff --check
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
@@ -84,7 +75,7 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Allow black fallback production mode"
+            git commit -m "Harden production image generation and QC"
             git push
           fi
 
@@ -144,20 +135,26 @@ jobs:
           if len(visual_qc) != 8:
               raise SystemExit(f"QC failed: expected 8 visual records, got {len(visual_qc)}")
           generated = sum(1 for x in visual_qc if x.get("generated"))
-          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, audio {audio_duration:.2f}s, visuals {generated}/8 (black fallback mode allowed)")
+          if generated < 6:
+              raise SystemExit(f"QC failed: only {generated}/8 scenes have real generated visuals; minimum is 6/8")
+          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, audio {audio_duration:.2f}s, visuals {generated}/8")
           PY
           ls -lh output/what_if_daily.mp4 output/metadata.json output/visual_qc.json
 
       - name: Save topic history
-        if: success()
+        if: always()
         run: |
+          if [ ! -f topic_history.json ]; then
+            echo "No topic history file created; nothing to save."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add topic_history.json
           if git diff --cached --quiet; then
             echo "No topic history changes to commit."
           else
-            git commit -m "Update WHAT IF DAILY topic history"
+            git commit -m "Reserve WHAT IF DAILY topic"
             git push
           fi
 
