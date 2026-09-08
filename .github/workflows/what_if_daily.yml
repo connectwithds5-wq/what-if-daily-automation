@@ -35,7 +35,7 @@ jobs:
       VISUALS_ENABLED: "true"
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-      YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID }}
+      YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID || secrets.YOUTUBE_CHANNEL_ID }}
       PYTHONUNBUFFERED: "1"
 
     steps:
@@ -63,9 +63,11 @@ jobs:
         run: |
           test -n "$GEMINI_API_KEY" || { echo "GEMINI_API_KEY is missing"; exit 1; }
           test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
-          echo "Required Gemini and YouTube upload credentials are present."
+          test -n "$YOUTUBE_API_KEY" || { echo "YOUTUBE_API_KEY is missing"; exit 1; }
+          test -n "$YOUTUBE_CHANNEL_ID" || { echo "YOUTUBE_CHANNEL_ID is missing"; exit 1; }
+          echo "Required Gemini and YouTube credentials are present."
 
-      - name: Refresh AI strategy from YouTube analytics
+      - name: Refresh AI strategy from YouTube Analytics
         run: |
           python src/analytics_strategy.py
           if [ -f growth_strategy.json ]; then
