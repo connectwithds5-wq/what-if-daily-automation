@@ -70,11 +70,14 @@ jobs:
         run: |
           python src/analytics_strategy.py
           if [ -f growth_strategy.json ]; then
-            echo "Analytics strategy available for this posting run."
+            echo "Strategy file available for this posting run."
             git diff --check
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add growth_strategy.json analytics_history.json
+            git add growth_strategy.json
+            if [ -f analytics_history.json ]; then
+              git add analytics_history.json
+            fi
             if git diff --cached --quiet; then
               echo "Analytics strategy unchanged."
             else
