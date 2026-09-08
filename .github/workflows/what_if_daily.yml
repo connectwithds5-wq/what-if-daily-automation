@@ -28,6 +28,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_IMAGE_MODEL: "@cf/black-forest-labs/flux-1-schnell"
+      CLOUDFLARE_IMAGE_FALLBACK_MODEL: "@cf/bytedance/stable-diffusion-xl-lightning"
       VISUALS_ENABLED: "true"
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
       RUN_SLOT: ${{ github.event.schedule == '30 13 * * *' && '0' || '1' }}
@@ -60,6 +61,27 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
           echo "All required secrets are present."
+
+      - name: Repair audio filter graph
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("src/what_if_daily_v2.py")
+          s = p.read_text(encoding="utf-8")
+          old = '''    fc = (\n        "[0:a]volume=1.0[n];"\n        "[1:a]volume=0.48[m];"\n        "[m][n]sidechaincompress=threshold=0.035:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"\n        "[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,"\n        "loudnorm=I=-15.5:TP=-1.2:LRA=8[a]"\n    )'''
+          new = '''    fc = (\n        "[0:a]volume=1.0,asplit=2[n][sc];"\n        "[1:a]volume=0.72[m];"\n        "[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"\n        "[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,"\n        "loudnorm=I=-15.5:TP=-1.2:LRA=8[a]"\n    )'''
+          if old not in s:
+              raise SystemExit("Expected audio filter block not found; refusing unsafe edit")
+          p.write_text(s.replace(old, new, 1), encoding="utf-8")
+          print("Audio filter graph repaired: narration is split before sidechain compression.")
+          PY
+
+          git diff -- src/what_if_daily_v2.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/what_if_daily_v2.py
+          git commit -m "Fix audio sidechain filter graph" || true
+          git push || true
 
       - name: Validate Python
         run: |
