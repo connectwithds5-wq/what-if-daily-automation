@@ -36,7 +36,6 @@ jobs:
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID }}
-      RUN_SLOT: ${{ github.event_name == 'workflow_dispatch' && inputs.slot || (github.event.schedule == '30 13 * * *' && '0' || '1') }}
       PYTHONUNBUFFERED: "1"
 
     steps:
@@ -88,6 +87,42 @@ jobs:
             echo "No refreshed strategy file; existing strategy will be used."
           fi
 
+      - name: Apply AI-selected posting times
+        env:
+          WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+        run: |
+          python src/update_posting_schedule.py
+          if ! git diff --quiet -- .github/workflows/what_if_daily.yml; then
+            if [ -z "$WORKFLOW_PAT" ]; then
+              echo "WARNING: WORKFLOW_PAT is not configured; keeping existing workflow schedule."
+              git checkout -- .github/workflows/what_if_daily.yml
+            else
+              git config user.name "what-if-daily-bot"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add .github/workflows/what_if_daily.yml
+              git commit -m "Update WHAT IF posting schedule from analytics"
+              git remote set-url origin "https://x-access-token:${WORKFLOW_PAT}@github.com/${GITHUB_REPOSITORY}.git"
+              git push origin "HEAD:${GITHUB_REF_NAME}"
+            fi
+          else
+            echo "Posting schedule already matches current AI strategy."
+          fi
+
+      - name: Resolve upload slot
+        env:
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_SLOT: ${{ inputs.slot }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SLOT="${MANUAL_SLOT:-0}"
+          else
+            FIRST_CRON=$(awk '/^[[:space:]]*- cron:/{gsub(/"/,"",$3); print $3; exit}' .github/workflows/what_if_daily.yml)
+            SECOND_CRON=$(awk '/^[[:space:]]*- cron:/{gsub(/"/,"",$3); n++; if(n==2) print $3}' .github/workflows/what_if_daily.yml)
+            if [ "$EVENT_SCHEDULE" = "$FIRST_CRON" ]; then SLOT="0"; elif [ "$EVENT_SCHEDULE" = "$SECOND_CRON" ]; then SLOT="1"; else SLOT="0"; fi
+          fi
+          echo "RUN_SLOT=$SLOT" >> "$GITHUB_ENV"
+          echo "Resolved WHAT IF upload slot: $SLOT"
+
       - name: Normalize production source
         run: |
           python scripts/normalize_production.py
@@ -122,6 +157,7 @@ jobs:
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/enforce_story_word_limit.py
           python -m py_compile src/analytics_strategy.py
+          python -m py_compile src/update_posting_schedule.py
           echo "Python syntax checks PASSED."
 
       - name: Audio filter smoke test
