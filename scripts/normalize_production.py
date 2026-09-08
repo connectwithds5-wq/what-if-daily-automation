@@ -18,7 +18,8 @@ def main() -> None:
         '    if not 100 <= total_words <= 116:\n        raise RuntimeError(f"Narration word count {total_words}; expected 100-116")',
     )
 
-    # One-time-per-run circuit breaker for image model quota exhaustion.
+    # Image quota circuit breaker: once a model is quota-exhausted, do not
+    # call that same model again for any later scene in this run.
     if 'DISABLED_IMAGE_MODELS = set()' not in s:
         s = s.replace(
             'VISUALS_ENABLED = os.getenv("VISUALS_ENABLED", "true").lower() == "true"',
@@ -36,9 +37,16 @@ def main() -> None:
     if old_error in s:
         s = s.replace(old_error, new_error, 1)
 
+    # FFmpeg lavfi expressions use commas as filter separators. Escape the
+    # comma inside mod(t,0.9) so the bird SFX expression parses correctly.
+    s = s.replace(
+        'aevalsrc=0.055*sin(2*PI*(900+700*sin(2*PI*0.8*t))*t)*exp(-0.55*mod(t,0.9)):s=44100:d=7.5',
+        'aevalsrc=0.055*sin(2*PI*(900+700*sin(2*PI*0.8*t))*t)*exp(-0.55*mod(t\\,0.9)):s=44100:d=7.5',
+    )
+
     SOURCE.write_text(s, encoding="utf-8")
     subprocess.run(["python", "-m", "py_compile", str(SOURCE)], check=True)
-    print("Production source normalized: production QC removed; image quota circuit breaker enabled.")
+    print("Production source normalized: QC removed, image quota circuit breaker enabled, and bird SFX filter fixed.")
 
 
 if __name__ == "__main__":
