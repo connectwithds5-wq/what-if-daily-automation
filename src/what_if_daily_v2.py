@@ -246,7 +246,8 @@ def visual_is_valid(path):
 
 
 def gemini_image(prompt, output_path):
-    # Gemini native image models have no Gemini API free tier. Keep this provider opt-in.
+    # Gemini native image generation is paid-only through the Gemini Developer API.
+    # Keep disabled by default so the automation never creates unexpected image charges.
     if os.getenv("GEMINI_IMAGE_ENABLED", "false").lower() != "true":
         return False
     if not (VISUALS_ENABLED and GEMINI_API_KEY):
@@ -279,7 +280,7 @@ SCENE: {prompt}""".strip()[:12000]
                         print(f"Gemini image saved: {output_path}")
                         return True
     except Exception as exc:
-        print(f"Gemini image disabled/unavailable: {exc}")
+        print(f"Gemini image unavailable: {exc}")
     return False
 
 def cloudflare_image(prompt, output_path):
@@ -323,8 +324,18 @@ SCENE: {prompt}""".strip()[:2048]
                     json=payload,
                     timeout=120,
                 )
-                if response.status_code in (429, 500, 502, 503, 504):
-                    print(f"{label} temporary capacity/server error {response.status_code}")
+                if response.status_code == 429:
+                    try:
+                        detail = response.json().get("errors", [{}])[0].get("message", "429")
+                    except Exception:
+                        detail = "429"
+                    print(f"{label} HTTP 429: {detail}")
+                    if "daily free allocation" in detail.lower() or "account limited" in detail.lower():
+                        print("Cloudflare daily free allocation is exhausted; stop image retries for this model.")
+                        break
+                    continue
+                if response.status_code in (500, 502, 503, 504):
+                    print(f"{label} temporary server error {response.status_code}")
                     continue
                 response.raise_for_status()
 
@@ -353,46 +364,6 @@ SCENE: {prompt}""".strip()[:2048]
             except Exception as exc:
                 print(f"{label} error: {exc}")
     return False
-
-def make_base_visual(topic, scene, index):
-    folder = FRAMES / f"scene_{index:02d}"
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / "source.png"
-
-    # Primary: Gemini native image generation when explicitly enabled.
-    if "gemini_image" in globals() and gemini_image(scene["visual_prompt"], path):
-        try:
-            image = Image.open(path).convert("RGB")
-            image = ImageOps.fit(image, (WIDTH, HEIGHT), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
-            image.save(path)
-            write_visual_qc(index, "gemini")
-            return path
-        except Exception as exc:
-            print(f"Gemini visual decode/resize failed: {exc}")
-
-    # Free Cloudflare chain: FLUX -> SDXL Lightning -> SDXL Base -> DreamShaper.
-    if cloudflare_image(scene["visual_prompt"], path):
-        try:
-            image = Image.open(path).convert("RGB")
-            image = ImageOps.fit(image, (WIDTH, HEIGHT), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
-            image.save(path)
-            write_visual_qc(index, "cloudflare")
-            return path
-        except Exception as exc:
-            print(f"Cloudflare visual decode/resize failed: {exc}")
-
-    # Last-resort visual only; it is explicitly marked as fallback in visual_qc.json.
-    print(f"All image providers failed for scene {index + 1}; using cinematic fallback.")
-    seed = int(hashlib.sha256(f"{topic}:{index}".encode()).hexdigest()[:8], 16)
-    random.seed(seed)
-    base = Image.new("RGB", (WIDTH, HEIGHT), (6, 8, 16))
-    draw = ImageDraw.Draw(base)
-    cx, cy = random.randint(150, 930), random.randint(450, 1450)
-    for radius in (600, 450, 300, 180):
-        draw.ellipse((cx-radius, cy-radius, cx+radius, cy+radius), outline=(35, 38, 55), width=3)
-    base.save(path)
-    write_visual_qc(index, "fallback")
-    return path
 
 def overlay_frame(background, on_screen, narration, index, progress):
     image = background.copy()
