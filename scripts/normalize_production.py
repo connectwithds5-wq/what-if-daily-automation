@@ -48,9 +48,6 @@ def main() -> None:
         s = s.replace(old_error, new_error, 1)
 
     # --- AI YouTube growth strategy ---------------------------------------
-    # Load a committed strategy file and inject slot-specific instructions
-    # into topic generation and story packaging. This keeps the strategy
-    # editable without hard-coding it into the generator.
     if 'GROWTH_STRATEGY = ROOT / "growth_strategy.json"' not in s:
         s = s.replace(
             'HISTORY = ROOT / "topic_history.json"',
@@ -63,12 +60,12 @@ def main() -> None:
         s = s.replace('\ndef generate_unique_topic():', strategy_block + '\n\ndef generate_unique_topic():', 1)
 
     old_topic_prompt = '''    prompt = f"""\nYou create one fresh topic for a YouTube Shorts channel called WHAT IF DAILY.\nReturn ONLY one topic, no quotes, no numbering.\nIt must start with What If and be scientifically plausible, surprising, highly visual, and different from all previous topics.\nKeep it under 80 characters.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
-    new_topic_prompt = '''    strategy, slot = strategy_context()\n    prompt = f"""\nYou are the AI growth strategist and topic editor for the YouTube Shorts channel WHAT IF DAILY.\nGenerate ONE fresh topic for this upload slot.\nReturn ONLY one topic, no quotes, no numbering.\nThe topic must start with What If, stay scientifically plausible, be highly visual, and be understandable worldwide by a general English audience.\nOptimize for: curiosity {strategy.get("ranking_objective", {}).get("curiosity", 0.25)}, broad appeal {strategy.get("ranking_objective", {}).get("broad_appeal", 0.20)}, visual impact {strategy.get("ranking_objective", {}).get("visual_impact", 0.18)}, retention {strategy.get("ranking_objective", {}).get("retention_potential", 0.17)}, comment potential {strategy.get("ranking_objective", {}).get("comment_debate", 0.08)}.\nCurrent slot: {RUN_SLOT} - {slot.get("name", "Universal Curiosity")}\nPreferred topic lanes: {json.dumps(slot.get("best_lanes", []))}\nPreferred style: {slot.get("style", "surprising and visual")}\nKeep it under 80 characters.\nAvoid narrow academic topics, generic facts, repeated ideas, and unsupported speculation.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
+    new_topic_prompt = '''    strategy, slot = strategy_context()\n    prompt = f"""\nYou are the AI growth strategist and topic editor for the YouTube Shorts channel WHAT IF DAILY.\nGenerate ONE fresh topic for this upload slot.\nReturn ONLY one topic, no quotes, no numbering.\nThe topic must start with What If, stay scientifically plausible, be highly visual, and be understandable worldwide by a general English audience.\nOptimize for curiosity {strategy.get("ranking_objective", {}).get("curiosity", 0.25)}, broad appeal {strategy.get("ranking_objective", {}).get("broad_appeal", 0.20)}, visual impact {strategy.get("ranking_objective", {}).get("visual_impact", 0.18)}, retention {strategy.get("ranking_objective", {}).get("retention_potential", 0.17)}, comment potential {strategy.get("ranking_objective", {}).get("comment_debate", 0.08)}.\nCurrent slot: {RUN_SLOT} - {slot.get("name", "Universal Curiosity")}\nPreferred topic lanes: {json.dumps(slot.get("best_lanes", []))}\nPreferred style: {slot.get("style", "surprising and visual")}\nKeep it under 80 characters.\nAvoid narrow academic topics, generic facts, repeated ideas, and unsupported speculation.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
     if old_topic_prompt in s:
         s = s.replace(old_topic_prompt, new_topic_prompt, 1)
 
-    # Add strategy context to story generation so the final title, hook,
-    # pacing, visuals and payoff are optimized for the selected slot.
+    # Add strategy context to story generation so title, hook, visuals and
+    # payoff are optimized for the selected slot.
     s = s.replace(
         'def create_story(topic):\n    prompt = f"""\nCreate an exciting 60-second WHAT IF DAILY science short about: {topic}',
         'def create_story(topic):\n    strategy, slot = strategy_context()\n    prompt = f"""\nCreate an exciting 58-second WHAT IF DAILY science short about: {topic}\nThis is upload slot {RUN_SLOT}: {slot.get("name", "Universal Curiosity")}.\nUse these preferred lanes: {json.dumps(slot.get("best_lanes", []))}.\nOptimize for broad appeal, immediate curiosity, strong visual transformation, high retention, and a surprising final payoff.\nDo not make the title clickbait that the video cannot deliver.',
@@ -81,15 +78,6 @@ def main() -> None:
         '"visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX", "growth_strategy_slot": RUN_SLOT, "growth_strategy_name": strategy_context()[1].get("name", "Universal Curiosity")}',
         1,
     )
-
-    # Record the upload slot/topic so a future analytics pass can compare
-    # slots, topics and performance without changing the production pipeline.
-    if 'growth_strategy_slot' not in s.split('def upload_youtube', 1)[1]:
-        s = s.replace(
-            '    print("YouTube upload complete:", response.get("id"))',
-            '    print("YouTube upload complete:", response.get("id"))\n    print(f"Growth strategy slot: {RUN_SLOT}")',
-            1,
-        )
 
     # FFmpeg lavfi expressions use commas as filter separators. Escape the
     # comma inside mod(t,0.9) so the bird SFX expression parses correctly.
