@@ -62,31 +62,33 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
           echo "All required secrets are present."
 
-      - name: Repair audio filter graph
+      - name: Ensure audio filter graph is fixed
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           p = Path("src/what_if_daily_v2.py")
           s = p.read_text(encoding="utf-8")
 
-          pattern = r'''    fc = \(\n        "\[0:a\]volume=1\.0\[n\];"\n        "\[1:a\]volume=[0-9.]+\[m\];"\n        "\[m\]\[n\]sidechaincompress=.*?\[duck\];"\n        "\[n\]\[duck\]amix=inputs=2:duration=first:dropout_transition=0\.8,"\n        "loudnorm=I=-15\.5:TP=-1\.2:LRA=8\[a\]"\n    \)'''
+          replacements = [
+              ('"[0:a]volume=1.0[n];"', '"[0:a]volume=1.0,asplit=2[n][sc];"'),
+              ('"[1:a]volume=0.62[m];"', '"[1:a]volume=0.72[m];"'),
+              ('"[1:a]volume=0.48[m];"', '"[1:a]volume=0.72[m];"'),
+              ('"[m][n]sidechaincompress=', '"[m][sc]sidechaincompress='),
+          ]
 
-          replacement = '''    fc = (
-        "[0:a]volume=1.0,asplit=2[n][sc];"
-        "[1:a]volume=0.72[m];"
-        "[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"
-        "[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,"
-        "loudnorm=I=-15.5:TP=-1.2:LRA=8[a]"
-    )'''
+          changed = False
+          for old, new in replacements:
+              if old in s:
+                  s = s.replace(old, new, 1)
+                  changed = True
 
-          s2, count = re.subn(pattern, replacement, s, count=1, flags=re.S)
-          if count != 1:
-              raise SystemExit("Audio filter block not found; refusing unsafe edit")
+          # If this source was already repaired, leave it untouched.
+          if "asplit=2[n][sc]" not in s or "[m][sc]sidechaincompress=" not in s:
+              raise SystemExit("Audio filter graph could not be fixed safely")
 
-          p.write_text(s2, encoding="utf-8")
-          print("Audio filter graph repaired safely: narration is split before sidechain compression.")
+          p.write_text(s, encoding="utf-8")
+          print("Audio filter graph ready: narration is split before sidechain compression.")
           PY
 
           git diff -- src/what_if_daily_v2.py
