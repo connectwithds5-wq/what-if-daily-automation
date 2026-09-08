@@ -21,14 +21,28 @@
     "0": {
       "name": "Universal Curiosity",
       "best_lanes": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
+      "topics": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
       "style": "instantly understandable, surprising, relatable, visual",
       "avoid": ["narrow academic topics", "long setup", "obscure terminology"]
     },
     "1": {
       "name": "Extreme Future",
       "best_lanes": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
+      "topics": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
       "style": "high stakes, escalating consequences, cinematic, debate-worthy",
       "avoid": ["repeating slot 0 topic", "generic facts", "pure speculation without scientific grounding"]
+    },
+    "slot_0": {
+      "name": "Universal Curiosity",
+      "best_lanes": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
+      "topics": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
+      "style": "instantly understandable, surprising, relatable, visual"
+    },
+    "slot_1": {
+      "name": "Extreme Future",
+      "best_lanes": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
+      "topics": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
+      "style": "high stakes, escalating consequences, cinematic, debate-worthy"
     }
   },
   "topic_rules": [
