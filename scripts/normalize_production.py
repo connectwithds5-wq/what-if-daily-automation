@@ -18,6 +18,13 @@ def main() -> None:
         '    if not 100 <= total_words <= 116:\n        raise RuntimeError(f"Narration word count {total_words}; expected 100-116")',
     )
 
+    # Reduce dead air between scene narrations. Each scene is 7.5s; leave only
+    # 0.05s of intentional boundary space instead of the old 0.20s.
+    s = s.replace(
+        '    target = SCENE_DURATION - 0.20',
+        '    target = SCENE_DURATION - 0.05',
+    )
+
     # Image quota circuit breaker: once a model is quota-exhausted, do not
     # call that same model again for any later scene in this run.
     if 'DISABLED_IMAGE_MODELS = set()' not in s:
@@ -46,7 +53,7 @@ def main() -> None:
 
     SOURCE.write_text(s, encoding="utf-8")
     subprocess.run(["python", "-m", "py_compile", str(SOURCE)], check=True)
-    print("Production source normalized: QC removed, image quota circuit breaker enabled, and bird SFX filter fixed.")
+    print("Production source normalized: QC removed, image quota circuit breaker enabled, bird SFX fixed, and scene silence reduced to 0.05s.")
 
 
 if __name__ == "__main__":
