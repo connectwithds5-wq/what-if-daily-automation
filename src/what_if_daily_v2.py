@@ -235,25 +235,96 @@ Rules:
     return data
 
 
+def visual_is_valid(path):
+    try:
+        with Image.open(path) as im:
+            im.verify()
+        return path.exists() and path.stat().st_size >= 50000
+    except Exception as exc:
+        print(f"Visual validation failed for {path}: {exc}")
+        return False
+
+
+def gemini_image(prompt, output_path):
+    if not (VISUALS_ENABLED and GEMINI_API_KEY):
+        return False
+    model = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
+    request_prompt = f"""Create a premium cinematic scientific visualization for a YouTube Shorts video.
+Vertical 9:16 composition. Photorealistic, dramatic, physically believable, strong depth, clear foreground/midground/background, realistic lighting, one unmistakable visual event.
+Show the exact phenomenon described below. Make the transformation or consequence visually obvious without any text.
+No text, letters, numbers, logos, labels, UI, watermark, captions, infographic panels, diagrams, or poster design.
+Do not make a generic abstract background, gradient, circles, or geometric pattern.
+Use concrete environments, objects, atmosphere, scale cues and realistic materials.
+SCENE: {prompt}""".strip()[:12000]
+    url = "https://generativelanguage.googleapis.com/v1beta/interactions"
+    headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
+    payload = {
+        "model": model,
+        "input": request_prompt,
+        "response_format": {
+            "type": "image",
+            "aspect_ratio": "9:16",
+            "image_size": "1K",
+        },
+    }
+    for attempt in range(2):
+        try:
+            print(f"Gemini image generation: {model} | attempt {attempt + 1}/2")
+            response = requests.post(url, headers=headers, json=payload, timeout=180)
+            if response.status_code in (429, 500, 502, 503, 504):
+                print(f"Gemini image temporary error {response.status_code}; retry/fallback.")
+                if attempt == 0:
+                    time.sleep(2)
+                    continue
+                return False
+            response.raise_for_status()
+            data = response.json()
+            image_b64 = None
+            output_image = data.get("output_image")
+            if isinstance(output_image, dict):
+                image_b64 = output_image.get("data")
+            if not image_b64:
+                for step in data.get("steps", []):
+                    if step.get("type") == "model_output":
+                        for block in step.get("content", []):
+                            if block.get("type") == "image" and block.get("data"):
+                                image_b64 = block["data"]
+                                break
+                    if image_b64:
+                        break
+            if not image_b64:
+                raise RuntimeError(f"Gemini image response contained no image: {str(data)[:1000]}")
+            if image_b64.startswith("data:image"):
+                image_b64 = image_b64.split(",", 1)[1]
+            output_path.write_bytes(base64.b64decode(image_b64))
+            if visual_is_valid(output_path):
+                print(f"Gemini image saved: {output_path}")
+                return True
+        except Exception as exc:
+            print(f"Gemini image error: {exc}")
+            if attempt == 0:
+                time.sleep(2)
+    return False
+
+
 def cloudflare_image(prompt, output_path):
     if not (VISUALS_ENABLED and CF_TOKEN and CF_ACCOUNT):
         return False
     request_prompt = f"""Cinematic scientific visualization for a premium YouTube Shorts video, vertical 9:16.
 Photorealistic, dramatic but scientifically grounded, realistic scale, strong depth, clear foreground/midground/background, one obvious visual event.
-No text, letters, numbers, logos, labels, UI, watermark, captions or infographic elements. Original visual only.
+No text, letters, numbers, logos, labels, UI, watermark, captions or infographic elements.
+Never return an abstract geometric background. Show concrete real-world objects and environments.
 SCENE: {prompt}""".strip()[:3500]
     headers = {"Authorization": f"Bearer {CF_TOKEN}", "Content-Type": "application/json"}
+
     def request_model(model, label, steps=4):
         url = f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT}/ai/run/{model}"
         payload = {"prompt": request_prompt, "steps": steps}
         try:
             print(f"{label} visual generation: {model}")
             response = requests.post(url, headers=headers, json=payload, timeout=180)
-            if response.status_code == 429:
-                print(f"{label} rate limited (429); switching immediately.")
-                return False
-            if response.status_code >= 500:
-                print(f"{label} server error {response.status_code}; switching immediately.")
+            if response.status_code in (429, 500, 502, 503, 504):
+                print(f"{label} temporary error {response.status_code}; switching immediately.")
                 return False
             response.raise_for_status()
             data = response.json()
@@ -268,12 +339,13 @@ SCENE: {prompt}""".strip()[:3500]
             if image_b64.startswith("data:image"):
                 image_b64 = image_b64.split(",", 1)[1]
             output_path.write_bytes(base64.b64decode(image_b64))
-            if output_path.exists() and output_path.stat().st_size > 0:
+            if visual_is_valid(output_path):
                 print(f"{label} visual saved: {output_path}")
                 return True
         except Exception as exc:
             print(f"{label} visual error: {exc}")
         return False
+
     if request_model(CF_MODEL, "Cloudflare primary", steps=4):
         return True
     if CF_FALLBACK_MODEL and CF_FALLBACK_MODEL != CF_MODEL:
@@ -282,19 +354,46 @@ SCENE: {prompt}""".strip()[:3500]
     return False
 
 
+def write_visual_qc(index, provider):
+    manifest = OUTPUT / "visual_qc.json"
+    data = []
+    if manifest.exists():
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except Exception:
+            data = []
+    data = [x for x in data if x.get("scene") != index + 1]
+    data.append({"scene": index + 1, "provider": provider, "generated": provider != "fallback"})
+    data.sort(key=lambda x: x["scene"])
+    manifest.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
 def make_base_visual(topic, scene, index):
     folder = FRAMES / f"scene_{index:02d}"
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / "source.png"
+
+    if gemini_image(scene["visual_prompt"], path):
+        try:
+            image = Image.open(path).convert("RGB")
+            image = ImageOps.fit(image, (WIDTH, HEIGHT), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
+            image.save(path)
+            write_visual_qc(index, "gemini")
+            return path
+        except Exception as exc:
+            print("Gemini visual decode/resize failed:", exc)
+
     if cloudflare_image(scene["visual_prompt"], path):
         try:
             image = Image.open(path).convert("RGB")
             image = ImageOps.fit(image, (WIDTH, HEIGHT), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
             image.save(path)
+            write_visual_qc(index, "cloudflare")
             return path
         except Exception as exc:
-            print("Visual decode/resize failed:", exc)
-    print(f"Visual generation failed for scene {index + 1}; using cinematic fallback.")
+            print("Cloudflare visual decode/resize failed:", exc)
+
+    print(f"All image providers failed for scene {index + 1}; using cinematic fallback.")
     seed = int(hashlib.sha256(f"{topic}:{index}".encode()).hexdigest()[:8], 16)
     random.seed(seed)
     base = Image.new("RGB", (WIDTH, HEIGHT), (6, 8, 16))
@@ -303,9 +402,8 @@ def make_base_visual(topic, scene, index):
     for radius in (600, 450, 300, 180):
         draw.ellipse((cx-radius, cy-radius, cx+radius, cy+radius), outline=(35, 38, 55), width=3)
     base.save(path)
+    write_visual_qc(index, "fallback")
     return path
-
-
 def overlay_frame(background, on_screen, narration, index, progress):
     image = background.copy()
     draw = ImageDraw.Draw(image, "RGBA")
@@ -595,7 +693,16 @@ def production_qc(story):
     words = sum(len(x.get("narration", "").split()) for x in story.get("scenes", []))
     if not 104 <= words <= 116:
         raise RuntimeError(f"QC failed: narration word count {words}")
-    print(f"PRODUCTION QC PASSED: {WIDTH}x{HEIGHT}, {duration:.2f}s, audio {audio_duration:.2f}s, {words} words")
+    manifest = OUTPUT / "visual_qc.json"
+    if not manifest.exists():
+        raise RuntimeError("QC failed: visual QC manifest missing")
+    visuals = json.loads(manifest.read_text(encoding="utf-8"))
+    generated = sum(1 for x in visuals if x.get("generated"))
+    if len(visuals) != SCENES:
+        raise RuntimeError(f"QC failed: expected {SCENES} visual records, got {len(visuals)}")
+    if generated < 6:
+        raise RuntimeError(f"QC failed: only {generated}/{SCENES} scenes have real generated visuals")
+    print(f"PRODUCTION QC PASSED: {WIDTH}x{HEIGHT}, {duration:.2f}s, audio {audio_duration:.2f}s, {words} words, visuals {generated}/{SCENES}")
 
 def main():
     clean()
