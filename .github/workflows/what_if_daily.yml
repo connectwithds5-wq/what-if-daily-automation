@@ -2,6 +2,15 @@ name: WHAT IF DAILY
 
 on:
   workflow_dispatch:
+    inputs:
+      slot:
+        description: "Growth strategy slot"
+        required: true
+        default: "0"
+        type: choice
+        options:
+          - "0"
+          - "1"
   schedule:
     - cron: "30 13 * * *"
     - cron: "0 17 * * *"
@@ -25,7 +34,7 @@ jobs:
       GEMINI_IMAGE_FALLBACK_2_MODEL: gemini-2.5-flash-image
       VISUALS_ENABLED: "true"
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
-      RUN_SLOT: ${{ github.event.schedule == '30 13 * * *' && '0' || '1' }}
+      RUN_SLOT: ${{ github.event_name == 'workflow_dispatch' && inputs.slot || (github.event.schedule == '30 13 * * *' && '0' || '1') }}
       PYTHONUNBUFFERED: "1"
 
     steps:
