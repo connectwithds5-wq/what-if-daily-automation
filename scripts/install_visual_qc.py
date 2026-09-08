@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 
 SOURCE = Path("src/what_if_daily_v2.py")
 
@@ -47,15 +46,12 @@ QC = '''def production_qc(story):
 '''
 
 GEMINI_IMAGE = r'''def gemini_image(prompt, output_path):
+    # Gemini native image models have no Gemini API free tier. Keep this provider opt-in.
+    if os.getenv("GEMINI_IMAGE_ENABLED", "false").lower() != "true":
+        return False
     if not (VISUALS_ENABLED and GEMINI_API_KEY):
         return False
-    models = []
-    for name in [
-        os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image"),
-        os.getenv("GEMINI_IMAGE_FALLBACK_MODEL", "gemini-3.1-flash-lite-image"),
-    ]:
-        if name and name not in models:
-            models.append(name)
+    model = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
     request_prompt = f"""Create a premium cinematic scientific visualization for a YouTube Shorts video.
 Vertical 9:16 composition. Photorealistic, dramatic, physically believable, strong depth, clear foreground/midground/background, realistic lighting, one unmistakable visual event.
 Show the exact phenomenon described below. Make the transformation or consequence visually obvious without any text.
@@ -65,54 +61,98 @@ Use concrete environments, objects, atmosphere, scale cues and realistic materia
 SCENE: {prompt}""".strip()[:12000]
     try:
         from google.genai import types
+        response = CLIENT.models.generate_content(
+            model=model,
+            contents=request_prompt,
+            config=types.GenerateContentConfig(
+                response_modalities=["IMAGE"],
+                image_config=types.ImageConfig(aspect_ratio="9:16", image_size="1K"),
+            ),
+        )
+        for candidate in getattr(response, "candidates", []) or []:
+            for part in getattr(getattr(candidate, "content", None), "parts", []) or []:
+                inline = getattr(part, "inline_data", None)
+                data = getattr(inline, "data", None) if inline else None
+                if data:
+                    output_path.write_bytes(base64.b64decode(data) if isinstance(data, str) else data)
+                    if visual_is_valid(output_path):
+                        print(f"Gemini image saved: {output_path}")
+                        return True
     except Exception as exc:
-        print(f"Gemini image SDK types unavailable: {exc}")
+        print(f"Gemini image disabled/unavailable: {exc}")
+    return False
+'''
+
+CLOUDFLARE_IMAGE = r'''def cloudflare_image(prompt, output_path):
+    if not (VISUALS_ENABLED and CF_TOKEN and CF_ACCOUNT):
         return False
 
-    for model in models:
-        for attempt in range(2):
+    request_prompt = f"""Cinematic scientific visualization for a premium YouTube Shorts video, vertical 9:16.
+Photorealistic, dramatic, scientifically grounded, realistic scale, strong depth, clear foreground/midground/background, one obvious real-world visual event.
+Show concrete environments, objects, atmosphere, materials and motion relevant to the scene.
+No text, letters, numbers, logos, labels, UI, watermark, captions, infographic panels, diagrams or abstract geometric backgrounds.
+SCENE: {prompt}""".strip()[:2048]
+    negative_prompt = "text, letters, numbers, logo, watermark, UI, infographic, poster, diagram, abstract circles, geometric background, blank dark background"
+    headers = {"Authorization": f"Bearer {CF_TOKEN}", "Content-Type": "application/json"}
+
+    models = [
+        (CF_MODEL, "Cloudflare FLUX", {"prompt": request_prompt, "steps": 4}),
+        (os.getenv("CLOUDFLARE_IMAGE_FALLBACK_MODEL", "@cf/bytedance/stable-diffusion-xl-lightning"), "Cloudflare SDXL Lightning", {
+            "prompt": request_prompt, "negative_prompt": negative_prompt, "width": 576, "height": 1024, "num_steps": 4, "guidance": 7.0,
+        }),
+        (os.getenv("CLOUDFLARE_IMAGE_FALLBACK_2_MODEL", "@cf/stabilityai/stable-diffusion-xl-base-1.0"), "Cloudflare SDXL Base", {
+            "prompt": request_prompt, "negative_prompt": negative_prompt, "width": 576, "height": 1024, "num_steps": 8, "guidance": 7.5,
+        }),
+        (os.getenv("CLOUDFLARE_IMAGE_FALLBACK_3_MODEL", "@cf/lykon/dreamshaper-8-lcm"), "Cloudflare DreamShaper", {
+            "prompt": request_prompt, "negative_prompt": negative_prompt, "width": 576, "height": 1024, "num_steps": 4, "guidance": 6.5,
+        }),
+    ]
+
+    seen = set()
+    for model, label, payload in models:
+        if not model or model in seen:
+            continue
+        seen.add(model)
+        for attempt, delay in enumerate((0, 8, 20), start=1):
+            if delay:
+                time.sleep(delay)
             try:
-                print(f"Gemini image generation: {model} | attempt {attempt + 1}/2")
-                response = CLIENT.models.generate_content(
-                    model=model,
-                    contents=request_prompt,
-                    config=types.GenerateContentConfig(
-                        response_modalities=["IMAGE"],
-                        image_config=types.ImageConfig(
-                            aspect_ratio="9:16",
-                            image_size="1K",
-                        ),
-                    ),
+                print(f"{label}: {model} | attempt {attempt}/3")
+                response = requests.post(
+                    f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT}/ai/run/{model}",
+                    headers=headers,
+                    json=payload,
+                    timeout=120,
                 )
-                image_bytes = None
-                for candidate in getattr(response, "candidates", []) or []:
-                    content = getattr(candidate, "content", None)
-                    for part in getattr(content, "parts", []) or []:
-                        inline = getattr(part, "inline_data", None)
-                        data = getattr(inline, "data", None) if inline else None
-                        if data:
-                            image_bytes = data
-                            break
-                    if image_bytes:
-                        break
-                if not image_bytes:
-                    raise RuntimeError("Gemini image response contained no inline image")
-                if isinstance(image_bytes, str):
-                    image_bytes = base64.b64decode(image_bytes.split(",", 1)[-1])
-                output_path.write_bytes(image_bytes)
+                if response.status_code in (429, 500, 502, 503, 504):
+                    print(f"{label} temporary capacity/server error {response.status_code}")
+                    continue
+                response.raise_for_status()
+
+                content_type = response.headers.get("content-type", "").lower()
+                if content_type.startswith("image/"):
+                    output_path.write_bytes(response.content)
+                else:
+                    data = response.json()
+                    result = data.get("result", data)
+                    image_b64 = result.get("image") if isinstance(result, dict) else None
+                    if not image_b64 and isinstance(result, dict):
+                        image_b64 = result.get("image_b64")
+                    if not image_b64 and isinstance(result, dict):
+                        images = result.get("images")
+                        if isinstance(images, list) and images:
+                            image_b64 = images[0]
+                    if not image_b64:
+                        raise RuntimeError(f"{label} returned no image: {str(data)[:700]}")
+                    if image_b64.startswith("data:image"):
+                        image_b64 = image_b64.split(",", 1)[1]
+                    output_path.write_bytes(base64.b64decode(image_b64))
+
                 if visual_is_valid(output_path):
-                    print(f"Gemini image saved: {output_path}")
+                    print(f"{label} visual saved: {output_path}")
                     return True
             except Exception as exc:
-                print(f"Gemini image error ({model}): {exc}")
-                upper = str(exc).upper()
-                if "429" in upper or "RESOURCE_EXHAUSTED" in upper or "QUOTA" in upper or "503" in upper or "UNAVAILABLE" in upper:
-                    if attempt == 0:
-                        time.sleep(5)
-                        continue
-                    print(f"Switching away from Gemini image model {model}.")
-                    break
-                break
+                print(f"{label} error: {exc}")
     return False
 '''
 
@@ -125,13 +165,10 @@ OVERLAY = r'''def overlay_frame(background, on_screen, narration, index, progres
     for y in range(1450, HEIGHT):
         alpha = int(210 * ((y - 1450) / (HEIGHT - 1450)))
         draw.rectangle((0, y, WIDTH, y + 1), fill=(0, 0, 0, alpha))
-
     small = font(30, True)
     main = font(94, True)
     sub = font(38)
     draw.text((60, 60), "WHAT IF DAILY", font=small, fill=(255, 255, 255, 235))
-
-    # Scene counter intentionally removed for a cleaner cinematic frame.
     on = safe_ascii(on_screen, 55).upper()
     typed = on[:max(1, int(len(on) * progress))]
     lines = wrap(typed, main, 900)[:3] or [""]
@@ -142,9 +179,6 @@ OVERLAY = r'''def overlay_frame(background, on_screen, narration, index, progres
         draw.text((x + 5, y + 7), line, font=main, fill=(0, 0, 0, 220), stroke_width=7, stroke_fill=(0, 0, 0, 230))
         draw.text((x, y), line, font=main, fill=(255, 255, 255, 255), stroke_width=3, stroke_fill=(0, 0, 0, 255))
         y += 115
-
-    # Narration/description is centered in the middle-lower area for readability,
-    # instead of being pinned to the bottom edge.
     if progress > 0.45:
         narration_lines = wrap(narration, sub, 900)[:3]
         block_height = len(narration_lines) * 52
@@ -153,7 +187,6 @@ OVERLAY = r'''def overlay_frame(background, on_screen, narration, index, progres
             bb = draw.textbbox((0, 0), line, font=sub)
             x = (WIDTH - (bb[2] - bb[0])) // 2
             draw.text((x, narration_y + j * 52), line, font=sub, fill=(245, 245, 245, 240), stroke_width=2, stroke_fill=(0, 0, 0, 200))
-
     draw.rectangle((60, 1815, WIDTH - 60, 1822), fill=(90, 90, 90, 170))
     draw.rectangle((60, 1815, 60 + int((WIDTH - 120) * ((index + progress) / SCENES)), 1822), fill=(255, 255, 255, 240))
     return image
@@ -161,28 +194,17 @@ OVERLAY = r'''def overlay_frame(background, on_screen, narration, index, progres
 
 s = SOURCE.read_text(encoding="utf-8")
 
-# Keep the existing production audio/visual normalizer changes, but replace the Gemini image implementation with the supported SDK call.
-start = s.find("def gemini_image(")
-end = s.find("\ndef cloudflare_image", start)
-if start < 0 or end < 0:
-    raise RuntimeError("Could not locate gemini_image() boundaries")
-s = s[:start] + GEMINI_IMAGE.rstrip() + "\n\n" + s[end + 1:]
+for name, replacement, next_name in [
+    ("gemini_image", GEMINI_IMAGE, "cloudflare_image"),
+    ("cloudflare_image", CLOUDFLARE_IMAGE, "overlay_frame"),
+    ("overlay_frame", OVERLAY, "create_typography_scene"),
+]:
+    start = s.find(f"def {name}(")
+    end = s.find(f"\ndef {next_name}", start)
+    if start < 0 or end < 0:
+        raise RuntimeError(f"Could not locate {name}() boundaries")
+    s = s[:start] + replacement.rstrip() + "\n\n" + s[end + 1:]
 
-# Improve Cloudflare resilience for transient 429/5xx responses.
-s = s.replace(
-    'if response.status_code in (429, 500, 502, 503, 504):\n                print(f"{label} temporary error {response.status_code}; switching immediately.")\n                return False',
-    'if response.status_code in (429, 500, 502, 503, 504):\n                print(f"{label} temporary error {response.status_code}; retrying after backoff.")\n                for delay in (8, 16):\n                    time.sleep(delay)\n                    retry = requests.post(url, headers=headers, json=payload, timeout=180)\n                    if retry.status_code < 400:\n                        response = retry\n                        break\n                    response = retry\n                if response.status_code >= 400:\n                    print(f"{label} remained unavailable after backoff: {response.status_code}")\n                    return False',
-    1,
-)
-
-# Replace overlay_frame with the cleaner layout.
-start = s.find("def overlay_frame(")
-end = s.find("\ndef create_typography_scene", start)
-if start < 0 or end < 0:
-    raise RuntimeError("Could not locate overlay_frame() boundaries")
-s = s[:start] + OVERLAY.rstrip() + "\n\n" + s[end + 1:]
-
-# Replace production QC installer and upload gate.
 start = s.find("def production_qc(")
 if start >= 0:
     end = s.find("\ndef main", start)
@@ -195,11 +217,9 @@ else:
         raise RuntimeError("Could not locate main()")
     s = s.replace(marker, QC + marker, 1)
 
-upload = "    write_metadata(story)\n    upload_youtube(story)"
-if upload in s:
-    s = s.replace(upload, "    write_metadata(story)\n    production_qc(story)\n    upload_youtube(story)", 1)
-elif "    production_qc(story)\n    upload_youtube(story)" not in s:
-    raise RuntimeError("Could not locate upload_youtube() call")
+if "    production_qc(story)\n    upload_youtube(story)" not in s:
+    if "    write_metadata(story)\n    upload_youtube(story)" in s:
+        s = s.replace("    write_metadata(story)\n    upload_youtube(story)", "    write_metadata(story)\n    production_qc(story)\n    upload_youtube(story)", 1)
 
 SOURCE.write_text(s, encoding="utf-8")
-print("Gemini image API, visual QC gate, and clean scene text layout installed.")
+print("Installed free Cloudflare multi-model visual generation and production visual QC.")
