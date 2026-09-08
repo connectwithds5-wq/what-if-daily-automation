@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime
 
 import requests
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 from google import genai
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -36,6 +36,7 @@ TTS_RATE = os.getenv("TTS_RATE", "+5%")
 CF_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 CF_ACCOUNT = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 CF_MODEL = os.getenv("CLOUDFLARE_IMAGE_MODEL", "@cf/black-forest-labs/flux-1-schnell")
+CF_FALLBACK_MODEL = os.getenv("CLOUDFLARE_IMAGE_FALLBACK_MODEL", "@cf/bytedance/stable-diffusion-xl-lightning")
 VISUALS_ENABLED = os.getenv("VISUALS_ENABLED", "true").lower() == "true"
 
 if not GEMINI_API_KEY:
@@ -220,46 +221,52 @@ Rules:
 def cloudflare_image(prompt, output_path):
     if not (VISUALS_ENABLED and CF_TOKEN and CF_ACCOUNT):
         return False
-    url = f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT}/ai/run/{CF_MODEL}"
-    request_prompt = f"""Cinematic scientific visualization for a premium YouTube Shorts video, vertical 9:16. Photorealistic, dramatic but scientifically grounded, realistic scale, strong depth, clear foreground/midground/background, one obvious visual event. No text, letters, numbers, logos, labels, UI, watermark, captions or infographic elements. Original visual only. SCENE: {prompt}"""
-    payload = {"prompt": request_prompt[:3500], "steps": 4}
+
+    request_prompt = f"""Cinematic scientific visualization for a premium YouTube Shorts video, vertical 9:16.
+Photorealistic, dramatic but scientifically grounded, realistic scale, strong depth, clear foreground/midground/background, one obvious visual event.
+No text, letters, numbers, logos, labels, UI, watermark, captions or infographic elements. Original visual only.
+SCENE: {prompt}""".strip()[:3500]
     headers = {"Authorization": f"Bearer {CF_TOKEN}", "Content-Type": "application/json"}
-    for attempt in range(5):
+
+    def request_model(model, label, steps=4):
+        url = f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT}/ai/run/{model}"
+        payload = {"prompt": request_prompt, "steps": steps}
         try:
-            print(f"Cloudflare visual attempt {attempt + 1}/5")
+            print(f"{label} visual generation: {model}")
             response = requests.post(url, headers=headers, json=payload, timeout=180)
             if response.status_code == 429:
-                retry = response.headers.get("Retry-After", "")
-                wait = int(retry) if retry.isdigit() else min(60, 10 * (attempt + 1))
-                print(f"Cloudflare rate limit; waiting {wait}s")
-                if attempt < 4:
-                    time.sleep(wait)
-                    continue
+                print(f"{label} rate limited (429); switching immediately.")
                 return False
             if response.status_code >= 500:
-                print(f"Cloudflare server error {response.status_code}")
-                if attempt < 4:
-                    time.sleep(min(60, 8 * (attempt + 1)))
-                    continue
+                print(f"{label} server error {response.status_code}; switching immediately.")
                 return False
             response.raise_for_status()
             data = response.json()
             result = data.get("result", data)
             image_b64 = result.get("image") if isinstance(result, dict) else None
-            if not image_b64 and isinstance(result, dict) and isinstance(result.get("images"), list) and result["images"]:
-                image_b64 = result["images"][0]
+            if not image_b64 and isinstance(result, dict):
+                images = result.get("images")
+                if isinstance(images, list) and images:
+                    image_b64 = images[0]
             if not image_b64:
-                raise RuntimeError(f"Cloudflare response did not contain an image: {str(data)[:800]}")
+                raise RuntimeError(f"{label} returned no image: {str(data)[:800]}")
             if image_b64.startswith("data:image"):
                 image_b64 = image_b64.split(",", 1)[1]
             output_path.write_bytes(base64.b64decode(image_b64))
             if output_path.exists() and output_path.stat().st_size > 0:
-                print("Visual saved:", output_path)
+                print(f"{label} visual saved: {output_path}")
                 return True
         except Exception as exc:
-            print("Cloudflare visual error:", exc)
-            if attempt < 4:
-                time.sleep(min(60, 5 * (attempt + 1)))
+            print(f"{label} visual error: {exc}")
+        return False
+
+    if request_model(CF_MODEL, "Cloudflare primary", steps=4):
+        return True
+
+    if CF_FALLBACK_MODEL and CF_FALLBACK_MODEL != CF_MODEL:
+        if request_model(CF_FALLBACK_MODEL, "Cloudflare fallback", steps=4):
+            return True
+
     return False
 
 
@@ -414,6 +421,24 @@ def create_scene_sfx(sfx_type, index):
     return out
 
 
+def create_transition_sfx(index):
+    """Short scene-boundary transition so visual changes feel intentional, not abrupt."""
+    out = AUDIO / f"transition_{index:02d}.m4a"
+    duration = 0.65
+    if index in (3, 6):
+        source = "anoisesrc=color=brown:amplitude=0.050:sample_rate=44100,lowpass=f=900"
+        volume = "0.22"
+    elif index in (5, 7):
+        source = "anoisesrc=color=white:amplitude=0.045:sample_rate=44100,highpass=f=350,lowpass=f=4200"
+        volume = "0.20"
+    else:
+        source = "anoisesrc=color=white:amplitude=0.035:sample_rate=44100,highpass=f=220,lowpass=f=3200"
+        volume = "0.16"
+    filters = f"volume={volume},afade=t=in:st=0:d=0.05,afade=t=out:st=0.34:d=0.31"
+    run(["ffmpeg", "-y", "-f", "lavfi", "-i", source, "-t", str(duration), "-af", filters, "-ac", "2", "-c:a", "aac", "-b:a", "96k", str(out)])
+    return out
+
+
 def fit_audio_to_scene(input_path, output_path):
     probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(input_path)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     try:
@@ -439,8 +464,22 @@ def create_scene_audio(story):
         voice = AUDIO / f"voice_fit_{i:02d}.m4a"
         fit_audio_to_scene(raw_voice, voice)
         sfx = create_scene_sfx(scene.get("sfx_type", "none"), i)
+        transition = create_transition_sfx(i) if i > 0 else None
         mixed = AUDIO / f"scene_mix_{i:02d}.m4a"
-        run(["ffmpeg", "-y", "-i", str(voice), "-i", str(sfx), "-filter_complex", "[0:a]volume=1.12[v];[1:a]volume=0.12[s];[v][s]amix=inputs=2:duration=longest:dropout_transition=0.25,alimiter=limit=0.92[a]", "-map", "[a]", "-t", str(SCENE_DURATION), "-c:a", "aac", "-b:a", "160k", str(mixed)])
+        inputs = [str(voice), str(sfx)]
+        filters = ["[0:a]volume=1.12[v]", "[1:a]volume=0.12[s]"]
+        mix_inputs = "[v][s]"
+        if transition:
+            inputs.append(str(transition))
+            filters.append("[2:a]volume=1.0[t]")
+            mix_inputs += "[t]"
+            mix_filter = f"{mix_inputs}amix=inputs=3:duration=longest:dropout_transition=0.12,alimiter=limit=0.92[a]"
+        else:
+            mix_filter = f"{mix_inputs}amix=inputs=2:duration=longest:dropout_transition=0.25,alimiter=limit=0.92[a]"
+        ff_inputs = []
+        for path in inputs:
+            ff_inputs += ["-i", path]
+        run(["ffmpeg", "-y", *ff_inputs, "-filter_complex", ";".join(filters + [mix_filter]), "-map", "[a]", "-t", str(SCENE_DURATION), "-c:a", "aac", "-b:a", "160k", str(mixed)])
         scene_clips.append(mixed)
     concat = AUDIO / "scene_audio_concat.txt"
     concat.write_text("\n".join(f"file '{p.as_posix()}'" for p in scene_clips), encoding="utf-8")
@@ -458,8 +497,8 @@ def mix_audio(video, narration_sfx, music):
 
 def save_metadata(story):
     title = safe_ascii(story.get("title", "WHAT IF DAILY"), 95)
-    desc = safe_ascii(story.get("description", ""), 4500) + "\n\nWHAT IF DAILY - IMAGINE. WATCH. WONDER.\n\nVisual format: cinematic scientific visualization with kinetic typography."
-    data = {"title": title, "description": desc, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography"}
+    desc = safe_ascii(story.get("description", ""), 4500) + "\n\nWHAT IF DAILY - IMAGINE. WATCH. WONDER.\n\nVisual format: cinematic scientific visualization + kinetic typography with scene-matched sound design."
+    data = {"title": title, "description": desc, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography + scene-matched sound design"}
     METADATA.write_text(json.dumps(data, indent=2), encoding="utf-8")
     return data
 
@@ -490,6 +529,7 @@ def main():
     print("Topic:", topic)
     print("Voice:", VOICE, "Rate:", TTS_RATE)
     print("Visuals enabled:", VISUALS_ENABLED, "Cloudflare configured:", bool(CF_TOKEN and CF_ACCOUNT))
+    print("Cloudflare visual fallback model:", CF_FALLBACK_MODEL)
     story = create_story(topic)
     infos = [create_typography_scene(topic, s, i) for i, s in enumerate(story["scenes"])]
     narration_sfx = create_scene_audio(story)
