@@ -409,7 +409,7 @@ def create_scene_sfx(sfx_type, index):
     if source is None:
         run(["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", str(SCENE_DURATION), "-c:a", "aac", "-b:a", "96k", str(out)])
         return out
-    filter_chain = f"{source},volume=0.55,afade=t=in:st=0:d=0.25,afade=t=out:st=6.8:d=0.7"
+    filter_chain = "volume=0.55,afade=t=in:st=0:d=0.25,afade=t=out:st=6.8:d=0.7"
     run(["ffmpeg", "-y", "-f", "lavfi", "-i", source, "-t", str(SCENE_DURATION), "-af", filter_chain, "-ac", "2", "-c:a", "aac", "-b:a", "96k", str(out)])
     return out
 
