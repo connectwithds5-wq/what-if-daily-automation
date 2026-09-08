@@ -174,8 +174,8 @@ Return ONLY valid JSON with exactly this structure:
 {{"title":"...","description":"...","keywords":["..."],"hashtags":["#..."],"scenes":[{{"narration":"...","on_screen":"...","visual_prompt":"...","sfx_type":"..."}}]}}
 Rules:
 - Exactly 8 scenes.
-- Total narration must be 88-96 words across all 8 scenes so the voice fits naturally inside 60 seconds.
-- Each narration must be 10-12 words, natural spoken English, factual but entertaining.
+- Total narration must be 80-96 words across all 8 scenes so the voice fits naturally inside 60 seconds.
+- Each narration should be 9-12 words, natural spoken English, factual but entertaining.
 - Each scene narration must be short enough to finish comfortably within 7.5 seconds at the configured voice rate.
 - Add exactly one sfx_type per scene from this list: none, airplane, bird, sand, wind, storm, thunder, ocean, water, fire, city, impact, rocket, space, heartbeat, whoosh, rumble.
 - sfx_type must describe the most important real-world sound implied by that scene; use none when no sound would help.
@@ -213,8 +213,8 @@ Rules:
         if not s["visual_prompt"]:
             raise RuntimeError(f"Empty visual prompt scene {i + 1}")
     total_words = sum(len(s["narration"].split()) for s in scenes)
-    if not 88 <= total_words <= 96:
-        raise RuntimeError(f"Narration word count {total_words}; expected 88-96")
+    if not 80 <= total_words <= 96:
+        raise RuntimeError(f"Narration word count {total_words}; expected 80-96")
     return data
 
 
