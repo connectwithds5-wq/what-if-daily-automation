@@ -484,7 +484,7 @@ def create_music():
 SFX_TYPES = {
     "none": None,
     "airplane": "anoisesrc=color=white:amplitude=0.035:sample_rate=44100,lowpass=f=2600,highpass=f=120",
-    "bird": "aevalsrc=0.055*sin(2*PI*(900+700*sin(2*PI*0.8*t))*t)*exp(-0.55*mod(t,0.9)):s=44100:d=7.5",
+    "bird": "aevalsrc=0.055*sin(2*PI*(900+700*sin(2*PI*0.8*t))*t)*exp(-0.55*mod(t\,0.9)):s=44100:d=7.5",
     "sand": "anoisesrc=color=brown:amplitude=0.025:sample_rate=44100,highpass=f=180,lowpass=f=4200",
     "wind": "anoisesrc=color=pink:amplitude=0.028:sample_rate=44100,lowpass=f=1400,highpass=f=90",
     "storm": "anoisesrc=color=brown:amplitude=0.035:sample_rate=44100,lowpass=f=900",
