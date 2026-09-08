@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "channel": "WHAT IF DAILY",
+  "audience": "global English-speaking Shorts viewers",
+  "baseline_schedule": {
+    "slot_0": "19:00 Asia/Kolkata",
+    "slot_1": "22:30 Asia/Kolkata",
+    "frequency": "2 Shorts per day",
+    "test_window_days": 21
+  },
+  "ranking_objective": {
+    "curiosity": 0.25,
+    "broad_appeal": 0.20,
+    "visual_impact": 0.18,
+    "retention_potential": 0.17,
+    "comment_debate": 0.08,
+    "novelty": 0.07,
+    "trend_relevance": 0.05
+  },
+  "slots": {
+    "0": {
+      "name": "Universal Curiosity",
+      "best_lanes": ["Earth", "space", "human body", "animals", "everyday science", "nature"],
+      "style": "instantly understandable, surprising, relatable, visual",
+      "avoid": ["narrow academic topics", "long setup", "obscure terminology"]
+    },
+    "1": {
+      "name": "Extreme Future",
+      "best_lanes": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"],
+      "style": "high stakes, escalating consequences, cinematic, debate-worthy",
+      "avoid": ["repeating slot 0 topic", "generic facts", "pure speculation without scientific grounding"]
+    }
+  },
+  "topic_rules": [
+    "Start with a simple What If question.",
+    "Prefer topics that a 12-year-old and an adult can both understand immediately.",
+    "Create a strong visual transformation in the first scene.",
+    "Build consequences scene by scene and end with a surprising payoff.",
+    "Prefer human-scale or planet-scale stakes over abstract science.",
+    "Do not repeat the same core phenomenon within the recent topic history.",
+    "Favor evergreen curiosity topics; use current trends only when they naturally fit the science niche.",
+    "Never sacrifice scientific plausibility just to chase a trend."
+  ],
+  "learning_rules": {
+    "primary_metrics": ["viewed_vs_swiped", "average_percentage_viewed", "engaged_views", "likes", "comments", "subscribers_gained"],
+    "secondary_metrics": ["views_24h", "views_7d", "returning_viewers"],
+    "decision_rule": "After enough data, shift more topics toward the lanes and slots that consistently outperform the channel median, while keeping controlled experiments running.",
+    "minimum_experiment": "Do not change the whole strategy after one viral or weak Short; use repeated results across comparable videos."
+  }
+}
