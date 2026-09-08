@@ -62,17 +62,16 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
           echo "All required secrets are present."
 
-      - name: Normalize production audio pipeline
+      - name: Normalize production pipeline
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           p = Path("src/what_if_daily_v2.py")
           s = p.read_text(encoding="utf-8")
 
-          # Replace the whole mix_audio function by function boundaries, not by fragile text matching.
+          # Replace the whole mix_audio function by function boundaries, not fragile text matching.
           start = s.find("def mix_audio(")
           end = s.find("\ndef write_metadata", start)
           if start < 0 or end < 0:
@@ -80,7 +79,6 @@ jobs:
 
           new_mix = '''def mix_audio(video, narration_sfx, music):
               audio = AUDIO / "final_audio.m4a"
-              # Split narration so the same stream can drive the ducking detector and final mix.
               fc = (
                   "[0:a]volume=1.0,asplit=2[n][sc];"
                   "[1:a]volume=0.68[m];"
@@ -97,16 +95,41 @@ jobs:
           '''
           s = s[:start] + new_mix + s[end + 1:]
 
-          # Transition SFX belongs at the scene boundary, not at time zero of every scene.
+          # Put transition SFX at the end of each 7.5s scene.
           s = s.replace('filters.append("[2:a]volume=1.0[t]")',
                         'filters.append("[2:a]adelay=6950|6950,volume=1.0[t]")', 1)
 
-          # Make the opening headline fully readable quickly instead of revealing one letter at a time.
+          # Make the opening headline fully readable quickly.
           s = s.replace('overlay_frame(frame, scene["on_screen"], scene["narration"], index, (fi + 1) / 18)',
                         'overlay_frame(frame, scene["on_screen"], scene["narration"], index, min(1.0, (fi + 1) / 5.0))', 1)
 
+          # Gemini can occasionally return 117-120 words despite the requested range.
+          # Normalize only the small overage while preserving each scene's 12-word minimum.
+          old = '''    total_words = sum(len(s["narration"].split()) for s in scenes)
+          if not 104 <= total_words <= 116:
+              raise RuntimeError(f"Narration word count {total_words}; expected 104-116")'''
+          new = '''    total_words = sum(len(s["narration"].split()) for s in scenes)
+          if 117 <= total_words <= 120:
+              excess = total_words - 116
+              for scene in reversed(scenes):
+                  words = scene["narration"].split()
+                  removable = max(0, len(words) - 12)
+                  take = min(removable, excess)
+                  if take:
+                      scene["narration"] = " ".join(words[:-take])
+                      excess -= take
+                  if excess == 0:
+                      break
+              total_words = sum(len(s["narration"].split()) for s in scenes)
+              print(f"Normalized narration word count to {total_words} words.")
+          if not 104 <= total_words <= 116:
+              raise RuntimeError(f"Narration word count {total_words}; expected 104-116")'''
+          if old not in s:
+              raise SystemExit("Could not locate narration word-count validation block")
+          s = s.replace(old, new, 1)
+
           p.write_text(s, encoding="utf-8")
-          print("Production audio pipeline normalized.")
+          print("Production pipeline normalized.")
           PY
 
           git diff --check
@@ -114,7 +137,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/what_if_daily_v2.py
-          git commit -m "Harden audio mix and scene transitions" || true
+          git commit -m "Harden production audio and story pacing" || true
           git push
 
       - name: Validate workflow and Python
