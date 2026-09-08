@@ -27,6 +27,8 @@ AUDIO = OUTPUT / "audio"
 VIDEO = OUTPUT / "what_if_daily.mp4"
 METADATA = OUTPUT / "metadata.json"
 HISTORY = ROOT / "topic_history.json"
+GROWTH_STRATEGY = ROOT / "growth_strategy.json"
+RUN_SLOT = os.getenv("RUN_SLOT", "0")
 
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
@@ -142,12 +144,48 @@ def gemini_text(prompt, attempts=2):
     raise RuntimeError(f"All Gemini models failed. Last error: {last_error}")
 
 
+
+def load_growth_strategy():
+    default = {
+        "slots": {
+            "0": {"name": "Universal Curiosity", "best_lanes": ["Earth", "space", "human body", "animals", "everyday science", "nature"], "style": "instantly understandable, surprising, relatable, visual"},
+            "1": {"name": "Extreme Future", "best_lanes": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"], "style": "high stakes, escalating consequences, cinematic, debate-worthy"}
+        },
+        "ranking_objective": {"curiosity": 0.25, "broad_appeal": 0.20, "visual_impact": 0.18, "retention_potential": 0.17, "comment_debate": 0.08, "novelty": 0.07, "trend_relevance": 0.05}
+    }
+    try:
+        data = json.loads(GROWTH_STRATEGY.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else default
+    except Exception:
+        return default
+
+
+def strategy_context():
+    strategy = load_growth_strategy()
+    slot = strategy.get("slots", {}).get(str(RUN_SLOT), strategy.get("slots", {}).get("0", {}))
+    return strategy, slot
+
+
 def generate_unique_topic():
     history = load_history()
+    strategy, slot = strategy_context()
+    recommended = strategy.get("next_best_topics", [])
+    rec_lines = []
+    for item in recommended[:5]:
+        if isinstance(item, dict):
+            rec_lines.append({"topic": item.get("topic", ""), "hook": item.get("hook", ""), "reason": item.get("reason", ""), "confidence": item.get("confidence", strategy.get("confidence", "medium"))})
     prompt = f"""
-You create one fresh topic for a YouTube Shorts channel called WHAT IF DAILY.
+You are the AI growth strategist and final topic selector for WHAT IF DAILY.
+Generate ONE fresh topic for the current upload slot using the latest analytics strategy below.
 Return ONLY one topic, no quotes, no numbering.
-It must start with What If and be scientifically plausible, surprising, highly visual, and different from all previous topics.
+The topic must start with What If, stay scientifically plausible, be highly visual, and be understandable worldwide by a general English audience.
+Current slot: {RUN_SLOT} - {slot.get("name", "Universal Curiosity")}
+Preferred lanes: {json.dumps(slot.get("best_lanes", []))}
+Preferred style: {slot.get("style", "surprising and visual")}
+Latest analytics recommendations, if present: {json.dumps(rec_lines, ensure_ascii=False)}
+Ranking weights: {json.dumps(strategy.get("ranking_objective", {}))}
+Decision rule: prefer an analytics-recommended direction when present and adapt it into a fresh original What If question; never copy a recommended title verbatim. If no explicit recommendation exists, rank a fresh topic using the slot lanes and ranking weights.
+Avoid narrow academic topics, generic facts, repeated ideas, and unsupported speculation.
 Keep it under 80 characters.
 Previous topics:
 {json.dumps(history[-200:], ensure_ascii=False)}
@@ -165,8 +203,14 @@ Previous topics:
 
 
 def create_story(topic):
+    strategy, slot = strategy_context()
     prompt = f"""
-Create an exciting 60-second WHAT IF DAILY science short about: {topic}
+Create an exciting 58-second WHAT IF DAILY science short about: {topic}
+This is upload slot {RUN_SLOT}: {slot.get("name", "Universal Curiosity")}.
+Use these preferred lanes: {json.dumps(slot.get("best_lanes", []))}.
+Analytics ranking weights: {json.dumps(strategy.get("ranking_objective", {}))}.
+Optimize for broad appeal, immediate curiosity, strong visual transformation, high retention, and a surprising final payoff.
+Do not make the title clickbait that the video cannot deliver.
 Return ONLY valid JSON with exactly this structure:
 {{"title":"...","description":"...","keywords":["..."],"hashtags":["#..."],"scenes":[{{"narration":"...","on_screen":"...","visual_prompt":"...","sfx_type":"..."}}]}}
 Rules:
@@ -606,7 +650,7 @@ def mix_audio(video, narration_sfx, music):
 def write_metadata(story):
     title = safe_ascii(story.get("title", "WHAT IF DAILY"), 120)
     desc = safe_ascii(story.get("description", ""), 5000)
-    data = {"title": title, "description": desc, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX"}
+    data = {"title": title, "description": desc, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX", "growth_strategy_slot": RUN_SLOT, "growth_strategy_name": strategy_context()[1].get("name", "Universal Curiosity"), "analytics_strategy_applied": True}
     METADATA.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
