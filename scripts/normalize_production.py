@@ -19,28 +19,14 @@ def main() -> None:
     )
 
     # Faster pacing: 8 scenes now total 58 seconds instead of 60 seconds.
-    # This removes unnecessary empty time while keeping every scene long enough
-    # for the narration and visual beat.
-    s = s.replace(
-        'SCENE_DURATION = DURATION / SCENES',
-        'SCENE_DURATION = 7.25',
-    )
+    s = s.replace('SCENE_DURATION = DURATION / SCENES', 'SCENE_DURATION = 7.25')
 
     # Leave only ~0.10s at the end of each scene for a natural handoff.
-    s = s.replace(
-        '    target = SCENE_DURATION - 0.20',
-        '    target = SCENE_DURATION - 0.10',
-    )
-    s = s.replace(
-        '    target = SCENE_DURATION - 0.05',
-        '    target = SCENE_DURATION - 0.10',
-    )
+    s = s.replace('    target = SCENE_DURATION - 0.20', '    target = SCENE_DURATION - 0.10')
+    s = s.replace('    target = SCENE_DURATION - 0.05', '    target = SCENE_DURATION - 0.10')
 
     # Keep the transition SFX inside the shorter 7.25s scene.
-    s = s.replace(
-        'adelay=6950|6950,volume=1.0[t]',
-        'adelay=6700|6700,volume=1.0[t]',
-    )
+    s = s.replace('adelay=6950|6950,volume=1.0[t]', 'adelay=6700|6700,volume=1.0[t]')
 
     # Image quota circuit breaker: once a model is quota-exhausted, do not
     # call that same model again for any later scene in this run.
@@ -61,6 +47,50 @@ def main() -> None:
     if old_error in s:
         s = s.replace(old_error, new_error, 1)
 
+    # --- AI YouTube growth strategy ---------------------------------------
+    # Load a committed strategy file and inject slot-specific instructions
+    # into topic generation and story packaging. This keeps the strategy
+    # editable without hard-coding it into the generator.
+    if 'GROWTH_STRATEGY = ROOT / "growth_strategy.json"' not in s:
+        s = s.replace(
+            'HISTORY = ROOT / "topic_history.json"',
+            'HISTORY = ROOT / "topic_history.json"\nGROWTH_STRATEGY = ROOT / "growth_strategy.json"\nRUN_SLOT = os.getenv("RUN_SLOT", "0")',
+            1,
+        )
+
+    strategy_block = '''\n\ndef load_growth_strategy():\n    default = {\n        "slots": {\n            "0": {"name": "Universal Curiosity", "best_lanes": ["Earth", "space", "human body", "animals", "everyday science", "nature"], "style": "instantly understandable, surprising, relatable, visual"},\n            "1": {"name": "Extreme Future", "best_lanes": ["extreme Earth", "future technology", "survival", "disasters", "space extremes", "human consequences"], "style": "high stakes, escalating consequences, cinematic, debate-worthy"}\n        },\n        "ranking_objective": {"curiosity": 0.25, "broad_appeal": 0.20, "visual_impact": 0.18, "retention_potential": 0.17, "comment_debate": 0.08, "novelty": 0.07, "trend_relevance": 0.05}\n    }\n    try:\n        data = json.loads(GROWTH_STRATEGY.read_text(encoding="utf-8"))\n        return data if isinstance(data, dict) else default\n    except Exception:\n        return default\n\n\ndef strategy_context():\n    strategy = load_growth_strategy()\n    slot = strategy.get("slots", {}).get(str(RUN_SLOT), strategy.get("slots", {}).get("0", {}))\n    return strategy, slot\n'''
+    if 'def load_growth_strategy()' not in s:
+        s = s.replace('\ndef generate_unique_topic():', strategy_block + '\n\ndef generate_unique_topic():', 1)
+
+    old_topic_prompt = '''    prompt = f"""\nYou create one fresh topic for a YouTube Shorts channel called WHAT IF DAILY.\nReturn ONLY one topic, no quotes, no numbering.\nIt must start with What If and be scientifically plausible, surprising, highly visual, and different from all previous topics.\nKeep it under 80 characters.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
+    new_topic_prompt = '''    strategy, slot = strategy_context()\n    prompt = f"""\nYou are the AI growth strategist and topic editor for the YouTube Shorts channel WHAT IF DAILY.\nGenerate ONE fresh topic for this upload slot.\nReturn ONLY one topic, no quotes, no numbering.\nThe topic must start with What If, stay scientifically plausible, be highly visual, and be understandable worldwide by a general English audience.\nOptimize for: curiosity {strategy.get("ranking_objective", {}).get("curiosity", 0.25)}, broad appeal {strategy.get("ranking_objective", {}).get("broad_appeal", 0.20)}, visual impact {strategy.get("ranking_objective", {}).get("visual_impact", 0.18)}, retention {strategy.get("ranking_objective", {}).get("retention_potential", 0.17)}, comment potential {strategy.get("ranking_objective", {}).get("comment_debate", 0.08)}.\nCurrent slot: {RUN_SLOT} - {slot.get("name", "Universal Curiosity")}\nPreferred topic lanes: {json.dumps(slot.get("best_lanes", []))}\nPreferred style: {slot.get("style", "surprising and visual")}\nKeep it under 80 characters.\nAvoid narrow academic topics, generic facts, repeated ideas, and unsupported speculation.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
+    if old_topic_prompt in s:
+        s = s.replace(old_topic_prompt, new_topic_prompt, 1)
+
+    # Add strategy context to story generation so the final title, hook,
+    # pacing, visuals and payoff are optimized for the selected slot.
+    s = s.replace(
+        'def create_story(topic):\n    prompt = f"""\nCreate an exciting 60-second WHAT IF DAILY science short about: {topic}',
+        'def create_story(topic):\n    strategy, slot = strategy_context()\n    prompt = f"""\nCreate an exciting 58-second WHAT IF DAILY science short about: {topic}\nThis is upload slot {RUN_SLOT}: {slot.get("name", "Universal Curiosity")}.\nUse these preferred lanes: {json.dumps(slot.get("best_lanes", []))}.\nOptimize for broad appeal, immediate curiosity, strong visual transformation, high retention, and a surprising final payoff.\nDo not make the title clickbait that the video cannot deliver.',
+        1,
+    )
+
+    # Store strategy metadata in each generated artifact for later analysis.
+    s = s.replace(
+        '"visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX"}',
+        '"visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX", "growth_strategy_slot": RUN_SLOT, "growth_strategy_name": strategy_context()[1].get("name", "Universal Curiosity")}',
+        1,
+    )
+
+    # Record the upload slot/topic so a future analytics pass can compare
+    # slots, topics and performance without changing the production pipeline.
+    if 'growth_strategy_slot' not in s.split('def upload_youtube', 1)[1]:
+        s = s.replace(
+            '    print("YouTube upload complete:", response.get("id"))',
+            '    print("YouTube upload complete:", response.get("id"))\n    print(f"Growth strategy slot: {RUN_SLOT}")',
+            1,
+        )
+
     # FFmpeg lavfi expressions use commas as filter separators. Escape the
     # comma inside mod(t,0.9) so the bird SFX expression parses correctly.
     s = s.replace(
@@ -70,7 +100,7 @@ def main() -> None:
 
     SOURCE.write_text(s, encoding="utf-8")
     subprocess.run(["python", "-m", "py_compile", str(SOURCE)], check=True)
-    print("Production source normalized: QC removed, image quota circuit breaker enabled, bird SFX fixed, and pacing optimized to 7.25s per scene (~58s total).")
+    print("Production source normalized: QC removed, image quota circuit breaker enabled, AI growth strategy enabled, bird SFX fixed, and pacing optimized to 7.25s per scene (~58s total).")
 
 
 if __name__ == "__main__":
