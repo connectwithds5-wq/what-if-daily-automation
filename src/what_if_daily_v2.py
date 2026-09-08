@@ -513,9 +513,9 @@ def create_scene_audio(story):
 def mix_audio(video, narration_sfx, music):
     audio = AUDIO / "final_audio.m4a"
     fc = (
-        "[0:a]volume=1.0[n];"
-        "[1:a]volume=0.48[m];"
-        "[m][n]sidechaincompress=threshold=0.035:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"
+        "[0:a]volume=1.0,asplit=2[n][sc];"
+        "[1:a]volume=0.72[m];"
+        "[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"
         "[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,"
         "loudnorm=I=-15.5:TP=-1.2:LRA=8[a]"
     )
