@@ -34,6 +34,8 @@ jobs:
       GEMINI_IMAGE_FALLBACK_2_MODEL: gemini-2.5-flash-image
       VISUALS_ENABLED: "true"
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID }}
       RUN_SLOT: ${{ github.event_name == 'workflow_dispatch' && inputs.slot || (github.event.schedule == '30 13 * * *' && '0' || '1') }}
       PYTHONUNBUFFERED: "1"
 
@@ -56,12 +58,32 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          python -m pip install google-genai requests
 
       - name: Validate secrets
         run: |
           test -n "$GEMINI_API_KEY" || { echo "GEMINI_API_KEY is missing"; exit 1; }
           test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
-          echo "Required Gemini and YouTube credentials are present."
+          echo "Required Gemini and YouTube upload credentials are present."
+
+      - name: Refresh AI strategy from YouTube analytics
+        run: |
+          python src/analytics_strategy.py
+          if [ -f growth_strategy.json ]; then
+            echo "Analytics strategy available for this posting run."
+            git diff --check
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add growth_strategy.json analytics_history.json
+            if git diff --cached --quiet; then
+              echo "Analytics strategy unchanged."
+            else
+              git commit -m "Refresh WHAT IF analytics strategy"
+              git push
+            fi
+          else
+            echo "No refreshed strategy file; existing strategy will be used."
+          fi
 
       - name: Normalize production source
         run: |
@@ -75,7 +97,7 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Normalize Gemini-only visual and audio pipeline"
+            git commit -m "Normalize analytics-driven production pipeline"
             git push
           fi
 
@@ -89,6 +111,7 @@ jobs:
           PY
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
+          python -m py_compile src/analytics_strategy.py
           echo "Python syntax checks PASSED."
 
       - name: Audio filter smoke test
