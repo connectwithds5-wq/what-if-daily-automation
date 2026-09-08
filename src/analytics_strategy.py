@@ -66,7 +66,7 @@ Data: {json.dumps(compact, ensure_ascii=False)}
 
 Return ONLY valid JSON with this structure:
 {{
-  "version": 2,
+  "version": 3,
   "channel": "WHAT IF DAILY",
   "generated_at": "",
   "confidence": "low|medium|high",
@@ -74,7 +74,10 @@ Return ONLY valid JSON with this structure:
   "overall_summary": "",
   "what_is_working": [{{"pattern":"","evidence":"","action":""}}],
   "what_to_improve": [{{"pattern":"","evidence":"","action":""}}],
-  "best_posting_windows": [{{"window":"","reason":"","confidence":"low|medium|high"}}],
+  "best_posting_windows": [
+    {{"hour_utc":0,"minute_utc":0,"window":"","reason":"","confidence":"low|medium|high"}},
+    {{"hour_utc":0,"minute_utc":0,"window":"","reason":"","confidence":"low|medium|high"}}
+  ],
   "next_best_topics": [{{"priority":1,"topic":"","hook":"","reason":"","confidence":"low|medium|high"}}],
   "ranking_objective": {{"curiosity":0.25,"broad_appeal":0.20,"visual_impact":0.18,"retention_potential":0.17,"comment_debate":0.08,"novelty":0.07,"trend_relevance":0.05}},
   "slots": {{
@@ -83,7 +86,7 @@ Return ONLY valid JSON with this structure:
   }}
 }}
 
-Recommendations must be fresh What If questions, scientifically plausible, visually strong, and broad-audience friendly. Use repeated performance patterns, not one-off outliers. Keep controlled experiments in the strategy.
+Choose TWO distinct best posting windows based only on the observed published_at timestamps and performance patterns. Return UTC hour/minute as integers so automation can schedule the two daily uploads. Keep at least 30 minutes between windows. Recommendations must be fresh What If questions, scientifically plausible, visually strong, and broad-audience friendly. Use repeated performance patterns, not one-off outliers. Keep controlled experiments in the strategy.
 """
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", "").strip())
     response = client.models.generate_content(model=GEMINI_MODEL, contents=prompt, config=types.GenerateContentConfig(response_mime_type="application/json"))
