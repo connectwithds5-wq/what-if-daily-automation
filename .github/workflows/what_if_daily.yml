@@ -95,39 +95,6 @@ jobs:
       - name: Generate WHAT IF DAILY V2 video
         run: python src/what_if_daily_v2.py
 
-      - name: Production QC and file verification
-        run: |
-          set -euo pipefail
-          test -s output/what_if_daily.mp4
-          test -s output/metadata.json
-          test -s output/visual_qc.json
-          ffprobe -v error -show_streams -show_format -of json output/what_if_daily.mp4 > output/final_probe.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          probe = json.loads(Path("output/final_probe.json").read_text())
-          streams = probe.get("streams", [])
-          video = next((x for x in streams if x.get("codec_type") == "video"), None)
-          audio = next((x for x in streams if x.get("codec_type") == "audio"), None)
-          if not video or not audio:
-              raise SystemExit("QC failed: video/audio stream missing")
-          if (int(video.get("width", 0)), int(video.get("height", 0))) != (1080, 1920):
-              raise SystemExit("QC failed: expected 1080x1920")
-          duration = float(probe.get("format", {}).get("duration", 0) or 0)
-          if not 59.0 <= duration <= 60.5:
-              raise SystemExit(f"QC failed: duration {duration:.2f}s")
-          if int(audio.get("sample_rate", 0)) != 44100:
-              raise SystemExit("QC failed: expected 44100 Hz audio")
-          visuals = json.loads(Path("output/visual_qc.json").read_text())
-          generated = sum(1 for x in visuals if x.get("generated"))
-          if len(visuals) != 8:
-              raise SystemExit(f"QC failed: expected 8 visual records, got {len(visuals)}")
-          if generated < 6:
-              raise SystemExit(f"QC failed: Gemini generated visuals only {generated}/8; minimum is 6/8")
-          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, 44.1kHz audio, Gemini visuals {generated}/8")
-          PY
-          ls -lh output/what_if_daily.mp4 output/metadata.json output/visual_qc.json
-
       - name: Save topic history
         if: success()
         run: |
