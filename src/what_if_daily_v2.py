@@ -344,7 +344,7 @@ def create_typography_scene(topic, scene, index):
         left = max(0, min(WIDTH - crop_w, left))
         top = max(0, min(HEIGHT - crop_h, top))
         frame = base.crop((left, top, left + crop_w, top + crop_h)).resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
-        frame = overlay_frame(frame, scene["on_screen"], scene["narration"], index, (fi + 1) / 18)
+        frame = overlay_frame(frame, scene["on_screen"], scene["narration"], index, min(1.0, (fi + 1) / 5.0))
         path = folder / f"frame_{fi:02d}.jpg"
         frame.save(path, quality=90, optimize=True)
         paths.append(path)
@@ -500,7 +500,7 @@ def create_scene_audio(story):
         mix_inputs = "[v][s]"
         if transition:
             inputs.append(str(transition))
-            filters.append("[2:a]volume=1.0[t]")
+            filters.append("[2:a]adelay=6950|6950,volume=1.0[t]")
             mix_inputs += "[t]"
             mix_filter = f"{mix_inputs}amix=inputs=3:duration=longest:dropout_transition=0.08,alimiter=limit=0.90[a]"
         else:
@@ -516,10 +516,11 @@ def create_scene_audio(story):
 
 def mix_audio(video, narration_sfx, music):
     audio = AUDIO / "final_audio.m4a"
+    # Split narration so the same stream can drive the ducking detector and final mix.
     fc = (
-        "[0:a]volume=1.0[n];"
-        "[1:a]volume=0.62[m];"
-        "[m][n]sidechaincompress=threshold=0.035:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"
+        "[0:a]volume=1.0,asplit=2[n][sc];"
+        "[1:a]volume=0.68[m];"
+        "[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"
         "[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,"
         "loudnorm=I=-15.5:TP=-1.2:LRA=8[a]"
     )
@@ -528,7 +529,6 @@ def mix_audio(video, narration_sfx, music):
          "-ar", "44100", "-c:a", "aac", "-b:a", "192k", str(audio)])
     run(["ffmpeg", "-y", "-i", str(video), "-i", str(audio), "-map", "0:v:0",
          "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", str(VIDEO)])
-
 
 def write_metadata(story):
     title = safe_ascii(story.get("title", "WHAT IF DAILY"), 120)
