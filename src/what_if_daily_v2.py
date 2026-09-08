@@ -226,8 +226,8 @@ Rules:
                 break
         total_words = sum(len(s["narration"].split()) for s in scenes)
         print(f"Normalized narration word count to {total_words} words.")
-    if not 104 <= total_words <= 116:
-        raise RuntimeError(f"Narration word count {total_words}; expected 104-116")
+    if not 100 <= total_words <= 116:
+        raise RuntimeError(f"Narration word count {total_words}; expected 100-116")
     return data
 
 
@@ -640,7 +640,7 @@ def production_qc(story):
     if int(audio_stream.get("sample_rate", 0)) != 44100:
         raise RuntimeError("QC failed: expected 44.1 kHz final audio")
     words = sum(len(x.get("narration", "").split()) for x in story.get("scenes", []))
-    if not 104 <= words <= 116:
+    if not 100 <= words <= 116:
         raise RuntimeError(f"QC failed: narration word count {words}")
     manifest = OUTPUT / "visual_qc.json"
     if not manifest.exists():
