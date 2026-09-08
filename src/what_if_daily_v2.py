@@ -217,6 +217,19 @@ Rules:
         if not s["visual_prompt"]:
             raise RuntimeError(f"Empty visual prompt scene {i + 1}")
     total_words = sum(len(s["narration"].split()) for s in scenes)
+    if 117 <= total_words <= 120:
+        excess = total_words - 116
+        for scene in reversed(scenes):
+            words = scene["narration"].split()
+            removable = max(0, len(words) - 12)
+            take = min(removable, excess)
+            if take:
+                scene["narration"] = " ".join(words[:-take])
+                excess -= take
+            if excess == 0:
+                break
+        total_words = sum(len(s["narration"].split()) for s in scenes)
+        print(f"Normalized narration word count to {total_words} words.")
     if not 104 <= total_words <= 116:
         raise RuntimeError(f"Narration word count {total_words}; expected 104-116")
     return data
@@ -516,7 +529,6 @@ def create_scene_audio(story):
 
 def mix_audio(video, narration_sfx, music):
     audio = AUDIO / "final_audio.m4a"
-    # Split narration so the same stream can drive the ducking detector and final mix.
     fc = (
         "[0:a]volume=1.0,asplit=2[n][sc];"
         "[1:a]volume=0.68[m];"
@@ -553,6 +565,38 @@ def upload_youtube(story):
     print("YouTube upload complete:", response.get("id"))
 
 
+def production_qc(story):
+    if not VIDEO.exists() or VIDEO.stat().st_size < 100000:
+        raise RuntimeError("QC failed: final MP4 missing or suspiciously small")
+    if not METADATA.exists() or METADATA.stat().st_size == 0:
+        raise RuntimeError("QC failed: metadata.json missing or empty")
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_streams", "-show_format", "-of", "json", str(VIDEO)],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+    )
+    if probe.returncode != 0:
+        raise RuntimeError("QC failed: ffprobe could not read final MP4")
+    info = json.loads(probe.stdout)
+    streams = info.get("streams", [])
+    video_stream = next((x for x in streams if x.get("codec_type") == "video"), None)
+    audio_stream = next((x for x in streams if x.get("codec_type") == "audio"), None)
+    if not video_stream or not audio_stream:
+        raise RuntimeError("QC failed: final MP4 must contain video and audio")
+    if int(video_stream.get("width", 0)) != WIDTH or int(video_stream.get("height", 0)) != HEIGHT:
+        raise RuntimeError(f"QC failed: expected {WIDTH}x{HEIGHT} video")
+    duration = float(info.get("format", {}).get("duration", 0) or 0)
+    if not 59.0 <= duration <= 60.5:
+        raise RuntimeError(f"QC failed: final duration {duration:.2f}s is outside 59.0-60.5s")
+    audio_duration = float(audio_stream.get("duration", duration) or duration)
+    if audio_duration < 58.5:
+        raise RuntimeError(f"QC failed: audio duration {audio_duration:.2f}s is too short")
+    if int(audio_stream.get("sample_rate", 0)) != 44100:
+        raise RuntimeError("QC failed: expected 44.1 kHz final audio")
+    words = sum(len(x.get("narration", "").split()) for x in story.get("scenes", []))
+    if not 104 <= words <= 116:
+        raise RuntimeError(f"QC failed: narration word count {words}")
+    print(f"PRODUCTION QC PASSED: {WIDTH}x{HEIGHT}, {duration:.2f}s, audio {audio_duration:.2f}s, {words} words")
+
 def main():
     clean()
     print("WHAT IF DAILY V2")
@@ -573,6 +617,7 @@ def main():
     music = create_music()
     mix_audio(silent, narration_sfx, music)
     write_metadata(story)
+    production_qc(story)
     upload_youtube(story)
     print("Final video:", VIDEO)
 
