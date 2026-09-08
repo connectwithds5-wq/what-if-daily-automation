@@ -19,7 +19,7 @@ from googleapiclient.http import MediaFileUpload
 
 WIDTH, HEIGHT, FPS, DURATION = 1080, 1920, 30, 60
 SCENES = 8
-SCENE_DURATION = DURATION / SCENES
+SCENE_DURATION = 7.25
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "output"
 FRAMES = OUTPUT / "frames"
@@ -542,7 +542,7 @@ def fit_audio_to_scene(input_path, output_path):
         duration = 0.0
     if duration <= 0:
         raise RuntimeError(f"Could not determine TTS duration for {input_path}")
-    target = SCENE_DURATION - 0.20
+    target = SCENE_DURATION - 0.10
     speed = duration / target
     filters = []
     if speed > 1.02:
@@ -574,7 +574,7 @@ def create_scene_audio(story):
         mix_inputs = "[v][s]"
         if transition:
             inputs.append(str(transition))
-            filters.append("[2:a]adelay=6950|6950,volume=1.0[t]")
+            filters.append("[2:a]adelay=6700|6700,volume=1.0[t]")
             mix_inputs += "[t]"
             mix_filter = f"{mix_inputs}amix=inputs=3:duration=longest:dropout_transition=0.08,alimiter=limit=0.90[a]"
         else:
