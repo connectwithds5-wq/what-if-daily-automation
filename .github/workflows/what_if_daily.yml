@@ -65,17 +65,19 @@ jobs:
         run: |
           python scripts/normalize_production.py
           python scripts/install_visual_qc.py
+          python scripts/allow_fallback_qc.py
           git diff --check
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
+          python -m py_compile scripts/allow_fallback_qc.py
           git add src/what_if_daily_v2.py
           if git diff --cached --quiet; then
             echo "Production source already normalized."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Simplify production visual fallback"
+            git commit -m "Allow final dark visual fallback"
             git push
           fi
 
@@ -90,6 +92,7 @@ jobs:
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
+          python -m py_compile scripts/allow_fallback_qc.py
           echo "Python syntax checks PASSED."
 
       - name: Audio filter smoke test
