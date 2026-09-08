@@ -6,7 +6,6 @@ on:
   schedule:
     # 7:00 PM IST
     - cron: "30 13 * * *"
-
     # 10:30 PM IST
     - cron: "0 17 * * *"
 
@@ -20,7 +19,6 @@ concurrency:
 jobs:
   generate-and-upload:
     runs-on: ubuntu-latest
-
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_MODEL: gemini-3.6-flash
@@ -95,16 +93,14 @@ jobs:
           '''
           s = s[:start] + new_mix + s[end + 1:]
 
-          # Put transition SFX at the end of each 7.5s scene.
           s = s.replace('filters.append("[2:a]volume=1.0[t]")',
                         'filters.append("[2:a]adelay=6950|6950,volume=1.0[t]")', 1)
 
-          # Make the opening headline fully readable quickly.
           s = s.replace('overlay_frame(frame, scene["on_screen"], scene["narration"], index, (fi + 1) / 18)',
                         'overlay_frame(frame, scene["on_screen"], scene["narration"], index, min(1.0, (fi + 1) / 5.0))', 1)
 
-          # Gemini can occasionally return 117-120 words despite the requested range.
-          # Normalize only the small overage while preserving each scene's 12-word minimum.
+          # Gemini occasionally returns a tiny overage (117-120 words). Trim only the excess,
+          # never taking a scene below 12 words, then enforce the real 104-116 production limit.
           old = '''    total_words = sum(len(s["narration"].split()) for s in scenes)
           if not 104 <= total_words <= 116:
               raise RuntimeError(f"Narration word count {total_words}; expected 104-116")'''
@@ -128,8 +124,54 @@ jobs:
               raise SystemExit("Could not locate narration word-count validation block")
           s = s.replace(old, new, 1)
 
+          # Add a hard pre-upload QC gate. Upload is impossible unless the final MP4 is valid.
+          marker = "\ndef main():\n"
+          if marker not in s:
+              raise SystemExit("Could not locate main()")
+          qc = '''\ndef production_qc(story):
+              if not VIDEO.exists() or VIDEO.stat().st_size < 100000:
+                  raise RuntimeError("QC failed: final MP4 missing or suspiciously small")
+              if not METADATA.exists() or METADATA.stat().st_size == 0:
+                  raise RuntimeError("QC failed: metadata.json missing or empty")
+              probe = subprocess.run([
+                  "ffprobe", "-v", "error", "-show_streams", "-show_format",
+                  "-of", "json", str(VIDEO)
+              ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+              if probe.returncode != 0:
+                  raise RuntimeError("QC failed: ffprobe could not read final MP4")
+              info = json.loads(probe.stdout)
+              streams = info.get("streams", [])
+              video_stream = next((x for x in streams if x.get("codec_type") == "video"), None)
+              audio_stream = next((x for x in streams if x.get("codec_type") == "audio"), None)
+              if not video_stream or not audio_stream:
+                  raise RuntimeError("QC failed: final MP4 must contain video and audio")
+              if int(video_stream.get("width", 0)) != WIDTH or int(video_stream.get("height", 0)) != HEIGHT:
+                  raise RuntimeError(f"QC failed: expected {WIDTH}x{HEIGHT} video")
+              duration = float(info.get("format", {}).get("duration", 0) or 0)
+              if not 59.0 <= duration <= 60.5:
+                  raise RuntimeError(f"QC failed: final duration {duration:.2f}s is outside 59.0-60.5s")
+              audio_duration = float(audio_stream.get("duration", duration) or duration)
+              if audio_duration < 58.5:
+                  raise RuntimeError(f"QC failed: audio duration {audio_duration:.2f}s is too short")
+              if int(audio_stream.get("sample_rate", 0)) != 44100:
+                  raise RuntimeError("QC failed: expected 44.1 kHz final audio")
+              words = sum(len(x.get("narration", "").split()) for x in story.get("scenes", []))
+              if not 104 <= words <= 116:
+                  raise RuntimeError(f"QC failed: narration word count {words}")
+              print(f"PRODUCTION QC PASSED: {WIDTH}x{HEIGHT}, {duration:.2f}s, audio {audio_duration:.2f}s, {words} words")
+\n'''
+          s = s.replace(marker, qc + marker, 1)
+
+          old_upload = '''    write_metadata(story)
+              upload_youtube(story)'''
+          if old_upload not in s:
+              raise SystemExit("Could not locate upload call for QC gate")
+          s = s.replace(old_upload, '''    write_metadata(story)
+              production_qc(story)
+              upload_youtube(story)''', 1)
+
           p.write_text(s, encoding="utf-8")
-          print("Production pipeline normalized.")
+          print("Production pipeline normalized and pre-upload QC installed.")
           PY
 
           git diff --check
@@ -137,7 +179,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/what_if_daily_v2.py
-          git commit -m "Harden production audio and story pacing" || true
+          git commit -m "Add production pre-upload QC gate" || true
           git push
 
       - name: Validate workflow and Python
