@@ -1,6 +1,7 @@
 """Build WHAT IF DAILY strategy from public YouTube data and owner Analytics."""
 import json
 import os
+import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -214,6 +215,41 @@ YOUTUBE DATA:
 """
 
 
+def generate_strategy_with_retry(client, prompt):
+    """Handle temporary Gemini overload without losing the analytics run."""
+    models = [GEMINI_MODEL]
+    for raw in os.environ.get("GEMINI_FALLBACK_MODELS", "gemini-3.6-flash-lite,gemini-2.5-flash").split(","):
+        model = raw.strip()
+        if model and model not in models:
+            models.append(model)
+
+    last_error = None
+    for model in models:
+        for attempt in range(4):
+            try:
+                print(f"Gemini strategy request: model={model}, attempt={attempt + 1}/4")
+                return client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(response_mime_type="application/json"),
+                )
+            except Exception as exc:
+                last_error = exc
+                status = getattr(exc, "status_code", None)
+                message = str(exc)
+                temporary = status in (429, 500, 502, 503, 504) or any(code in message for code in ("429", "500", "502", "503", "504", "UNAVAILABLE", "high demand"))
+                if not temporary:
+                    raise
+                if attempt < 3:
+                    delay = 2 ** attempt
+                    print(f"Gemini temporary error ({status or 'unknown'}). Retrying in {delay}s...")
+                    time.sleep(delay)
+                else:
+                    print(f"Gemini model {model} still unavailable after 4 attempts.")
+
+    raise RuntimeError(f"Gemini strategy generation failed after retries/fallbacks: {last_error}")
+
+
 def main():
     if not API_KEY or not CHANNEL_ID:
         raise RuntimeError("YOUTUBE_API_KEY or YOUTUBE_CHANNEL_ID is missing.")
@@ -239,10 +275,9 @@ def main():
     if not key:
         raise RuntimeError("GEMINI_API_KEY is missing.")
     client = genai.Client(api_key=key)
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=build_prompt(videos[:MAX_VIDEOS], analytics, retention),
-        config=types.GenerateContentConfig(response_mime_type="application/json"),
+    response = generate_strategy_with_retry(
+        client,
+        build_prompt(videos[:MAX_VIDEOS], analytics, retention),
     )
     text = (response.text or "").strip().removeprefix("```json").removesuffix("```").strip()
     strategy = json.loads(text)
