@@ -174,8 +174,8 @@ Return ONLY valid JSON with exactly this structure:
 {{"title":"...","description":"...","keywords":["..."],"hashtags":["#..."],"scenes":[{{"narration":"...","on_screen":"...","visual_prompt":"...","sfx_type":"..."}}]}}
 Rules:
 - Exactly 8 scenes.
-- Total narration must be 112-124 words across all 8 scenes so the voice finishes naturally inside 60 seconds.
-- Each narration must be 13-16 words, natural spoken English, factual but entertaining.
+- Total narration must be 88-96 words across all 8 scenes so the voice fits naturally inside 60 seconds.
+- Each narration must be 10-12 words, natural spoken English, factual but entertaining.
 - Each scene narration must be short enough to finish comfortably within 7.5 seconds at the configured voice rate.
 - Add exactly one sfx_type per scene from this list: none, airplane, bird, sand, wind, storm, thunder, ocean, water, fire, city, impact, rocket, space, heartbeat, whoosh, rumble.
 - sfx_type must describe the most important real-world sound implied by that scene; use none when no sound would help.
@@ -183,38 +183,38 @@ Rules:
 - visual_prompt must describe the EXACT thing being narrated in that scene.
 - visual_prompt must be a cinematic, photorealistic scientific visualization suitable for a vertical 9:16 Short.
 - Every scene must have a clearly different visual event from the previous scene.
-- Use concrete objects, environments, scale and motion relevant to the narration.
-- No generic portraits or random people unless the narration requires them.
-- No text, letters, numbers, logos, labels, UI, watermark, infographic text, or captions inside generated images.
+- Use concrete objects, environments, scale and motion: Earth, cities, storms, oceans, spacecraft, wildfire, shockwaves, etc. when relevant.
+- No generic portraits, no random people unless the narration needs them.
+- No text, letters, logos, labels, UI, watermark, infographic text, or captions inside the generated image.
 - The final scene must show the actual consequence/payoff, not repeat the opening.
-- Story progression: hook -> immediate effect -> escalation -> consequence -> surprising detail -> peak -> twist -> final payoff.
+- Story progression: hook -> immediate effect -> escalation -> human/planetary consequence -> surprising scientific detail -> peak -> twist -> final payoff.
 """
     raw = gemini_text(prompt, attempts=2)
     raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw.strip(), flags=re.I)
     try:
         data = json.loads(raw)
-    except Exception as exc:
-        raise RuntimeError(f"Story JSON parse failed: {exc}\n{raw[:1200]}")
+    except Exception as e:
+        raise RuntimeError(f"Story JSON parse failed: {e}\n{raw[:1000]}")
     scenes = data.get("scenes", [])
     if len(scenes) != SCENES:
         raise RuntimeError(f"Gemini returned {len(scenes)} scenes; expected {SCENES}")
     allowed_sfx = {"none", "airplane", "bird", "sand", "wind", "storm", "thunder", "ocean", "water", "fire", "city", "impact", "rocket", "space", "heartbeat", "whoosh", "rumble"}
-    for i, scene in enumerate(scenes):
-        scene["narration"] = safe_ascii(scene.get("narration", ""), 700)
-        scene["on_screen"] = safe_ascii(scene.get("on_screen", ""), 55)
-        scene["visual_prompt"] = safe_ascii(scene.get("visual_prompt", ""), 1800)
-        scene["sfx_type"] = safe_ascii(scene.get("sfx_type", "none"), 30).lower().strip()
-        if scene["sfx_type"] not in allowed_sfx:
-            scene["sfx_type"] = "none"
-        if not scene["narration"]:
+    for i, s in enumerate(scenes):
+        s["narration"] = safe_ascii(s.get("narration", ""), 700)
+        s["on_screen"] = safe_ascii(s.get("on_screen", ""), 55)
+        s["visual_prompt"] = safe_ascii(s.get("visual_prompt", ""), 1500)
+        s["sfx_type"] = safe_ascii(s.get("sfx_type", "none"), 30).lower().strip()
+        if s["sfx_type"] not in allowed_sfx:
+            s["sfx_type"] = "none"
+        if not s["narration"]:
             raise RuntimeError(f"Empty narration scene {i + 1}")
-        if not scene["on_screen"]:
-            scene["on_screen"] = scene["narration"][:55]
-        if not scene["visual_prompt"]:
+        if not s["on_screen"]:
+            s["on_screen"] = s["narration"][:55]
+        if not s["visual_prompt"]:
             raise RuntimeError(f"Empty visual prompt scene {i + 1}")
-    total_words = sum(len(scene["narration"].split()) for scene in scenes)
-    if not 108 <= total_words <= 128:
-        raise RuntimeError(f"Narration word count {total_words}; expected 108-128")
+    total_words = sum(len(s["narration"].split()) for s in scenes)
+    if not 88 <= total_words <= 96:
+        raise RuntimeError(f"Narration word count {total_words}; expected 88-96")
     return data
 
 
