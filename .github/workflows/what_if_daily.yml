@@ -66,6 +66,7 @@ jobs:
         run: |
           python scripts/normalize_production.py
           python scripts/install_visual_qc.py
+          python scripts/ensure_visual_pipeline.py
           python - <<'PY'
           from pathlib import Path
           p = Path("src/what_if_daily_v2.py")
@@ -81,6 +82,7 @@ jobs:
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
+          python -m py_compile scripts/ensure_visual_pipeline.py
           git add src/what_if_daily_v2.py
           if git diff --cached --quiet; then
             echo "Production source already normalized."
@@ -102,6 +104,7 @@ jobs:
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
+          python -m py_compile scripts/ensure_visual_pipeline.py
           echo "Python syntax checks PASSED."
 
       - name: Audio filter smoke test
