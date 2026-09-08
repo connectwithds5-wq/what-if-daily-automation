@@ -248,64 +248,71 @@ def visual_is_valid(path):
 def gemini_image(prompt, output_path):
     if not (VISUALS_ENABLED and GEMINI_API_KEY):
         return False
-    model = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
+    models = []
+    for name in [
+        os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image"),
+        os.getenv("GEMINI_IMAGE_FALLBACK_MODEL", "gemini-3.1-flash-lite-image"),
+    ]:
+        if name and name not in models:
+            models.append(name)
     request_prompt = f"""Create a premium cinematic scientific visualization for a YouTube Shorts video.
 Vertical 9:16 composition. Photorealistic, dramatic, physically believable, strong depth, clear foreground/midground/background, realistic lighting, one unmistakable visual event.
 Show the exact phenomenon described below. Make the transformation or consequence visually obvious without any text.
 No text, letters, numbers, logos, labels, UI, watermark, captions, infographic panels, diagrams, or poster design.
-Do not make a generic abstract background, gradient, circles, or geometric pattern.
+Do not make a generic abstract background. Do not make a simple gradient or geometric pattern.
 Use concrete environments, objects, atmosphere, scale cues and realistic materials.
 SCENE: {prompt}""".strip()[:12000]
-    url = "https://generativelanguage.googleapis.com/v1beta/interactions"
-    headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
-    payload = {
-        "model": model,
-        "input": request_prompt,
-        "response_format": {
-            "type": "image",
-            "aspect_ratio": "9:16",
-            "image_size": "1K",
-        },
-    }
-    for attempt in range(2):
-        try:
-            print(f"Gemini image generation: {model} | attempt {attempt + 1}/2")
-            response = requests.post(url, headers=headers, json=payload, timeout=180)
-            if response.status_code in (429, 500, 502, 503, 504):
-                print(f"Gemini image temporary error {response.status_code}; retry/fallback.")
-                if attempt == 0:
-                    time.sleep(2)
-                    continue
-                return False
-            response.raise_for_status()
-            data = response.json()
-            image_b64 = None
-            output_image = data.get("output_image")
-            if isinstance(output_image, dict):
-                image_b64 = output_image.get("data")
-            if not image_b64:
-                for step in data.get("steps", []):
-                    if step.get("type") == "model_output":
-                        for block in step.get("content", []):
-                            if block.get("type") == "image" and block.get("data"):
-                                image_b64 = block["data"]
-                                break
-                    if image_b64:
-                        break
-            if not image_b64:
-                raise RuntimeError(f"Gemini image response contained no image: {str(data)[:1000]}")
-            if image_b64.startswith("data:image"):
-                image_b64 = image_b64.split(",", 1)[1]
-            output_path.write_bytes(base64.b64decode(image_b64))
-            if visual_is_valid(output_path):
-                print(f"Gemini image saved: {output_path}")
-                return True
-        except Exception as exc:
-            print(f"Gemini image error: {exc}")
-            if attempt == 0:
-                time.sleep(2)
-    return False
+    try:
+        from google.genai import types
+    except Exception as exc:
+        print(f"Gemini image SDK types unavailable: {exc}")
+        return False
 
+    for model in models:
+        for attempt in range(2):
+            try:
+                print(f"Gemini image generation: {model} | attempt {attempt + 1}/2")
+                response = CLIENT.models.generate_content(
+                    model=model,
+                    contents=request_prompt,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="9:16",
+                            image_size="1K",
+                        ),
+                    ),
+                )
+                image_bytes = None
+                for candidate in getattr(response, "candidates", []) or []:
+                    content = getattr(candidate, "content", None)
+                    for part in getattr(content, "parts", []) or []:
+                        inline = getattr(part, "inline_data", None)
+                        data = getattr(inline, "data", None) if inline else None
+                        if data:
+                            image_bytes = data
+                            break
+                    if image_bytes:
+                        break
+                if not image_bytes:
+                    raise RuntimeError("Gemini image response contained no inline image")
+                if isinstance(image_bytes, str):
+                    image_bytes = base64.b64decode(image_bytes.split(",", 1)[-1])
+                output_path.write_bytes(image_bytes)
+                if visual_is_valid(output_path):
+                    print(f"Gemini image saved: {output_path}")
+                    return True
+            except Exception as exc:
+                print(f"Gemini image error ({model}): {exc}")
+                upper = str(exc).upper()
+                if "429" in upper or "RESOURCE_EXHAUSTED" in upper or "QUOTA" in upper or "503" in upper or "UNAVAILABLE" in upper:
+                    if attempt == 0:
+                        time.sleep(5)
+                        continue
+                    print(f"Switching away from Gemini image model {model}.")
+                    break
+                break
+    return False
 
 def cloudflare_image(prompt, output_path):
     if not (VISUALS_ENABLED and CF_TOKEN and CF_ACCOUNT):
@@ -324,8 +331,17 @@ SCENE: {prompt}""".strip()[:3500]
             print(f"{label} visual generation: {model}")
             response = requests.post(url, headers=headers, json=payload, timeout=180)
             if response.status_code in (429, 500, 502, 503, 504):
-                print(f"{label} temporary error {response.status_code}; switching immediately.")
-                return False
+                print(f"{label} temporary error {response.status_code}; retrying after backoff.")
+                for delay in (8, 16):
+                    time.sleep(delay)
+                    retry = requests.post(url, headers=headers, json=payload, timeout=180)
+                    if retry.status_code < 400:
+                        response = retry
+                        break
+                    response = retry
+                if response.status_code >= 400:
+                    print(f"{label} remained unavailable after backoff: {response.status_code}")
+                    return False
             response.raise_for_status()
             data = response.json()
             result = data.get("result", data)
