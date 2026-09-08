@@ -32,7 +32,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 VOICE = os.getenv("TTS_VOICE", "en-US-AndrewMultilingualNeural")
-TTS_RATE = os.getenv("TTS_RATE", "+5%")
+TTS_RATE = os.getenv("TTS_RATE", "+12%")
 CF_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 CF_ACCOUNT = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 CF_MODEL = os.getenv("CLOUDFLARE_IMAGE_MODEL", "@cf/black-forest-labs/flux-1-schnell")
@@ -174,18 +174,18 @@ Return ONLY valid JSON with exactly this structure:
 {{"title":"...","description":"...","keywords":["..."],"hashtags":["#..."],"scenes":[{{"narration":"...","on_screen":"...","visual_prompt":"...","sfx_type":"..."}}]}}
 Rules:
 - Exactly 8 scenes.
-- Total narration must be 80-96 words across all 8 scenes so the voice fits naturally inside 60 seconds.
-- Each narration should be 9-12 words, natural spoken English, factual but entertaining.
-- Each scene narration must be short enough to finish comfortably within 7.5 seconds at the configured voice rate.
+- Total narration must be 104-116 words across all 8 scenes for energetic pacing without sounding rushed.
+- Each narration must be 12-15 words, natural spoken English, punchy, factual, and entertaining.
+- Each scene narration should normally finish within 5.5-7.2 seconds at the configured voice rate; never pad speech with silence.
 - Add exactly one sfx_type per scene from this list: none, airplane, bird, sand, wind, storm, thunder, ocean, water, fire, city, impact, rocket, space, heartbeat, whoosh, rumble.
 - sfx_type must describe the most important real-world sound implied by that scene; use none when no sound would help.
 - on_screen is punchy English text, maximum 55 characters.
 - visual_prompt must describe the EXACT thing being narrated in that scene.
 - visual_prompt must be a cinematic, photorealistic scientific visualization suitable for a vertical 9:16 Short.
 - Every scene must have a clearly different visual event from the previous scene.
-- Use concrete objects, environments, scale and motion: Earth, cities, storms, oceans, spacecraft, wildfire, shockwaves, etc. when relevant.
-- No generic portraits, no random people unless the narration needs them.
-- No text, letters, logos, labels, UI, watermark, infographic text, or captions inside the generated image.
+- Use concrete objects, environments, scale and motion relevant to the narration.
+- No generic portraits or random people unless the narration needs them.
+- No text, letters, logos, labels, UI, watermark, infographic text, or captions inside generated images.
 - The final scene must show the actual consequence/payoff, not repeat the opening.
 - Story progression: hook -> immediate effect -> escalation -> human/planetary consequence -> surprising scientific detail -> peak -> twist -> final payoff.
 """
@@ -213,21 +213,19 @@ Rules:
         if not s["visual_prompt"]:
             raise RuntimeError(f"Empty visual prompt scene {i + 1}")
     total_words = sum(len(s["narration"].split()) for s in scenes)
-    if not 80 <= total_words <= 96:
-        raise RuntimeError(f"Narration word count {total_words}; expected 80-96")
+    if not 104 <= total_words <= 116:
+        raise RuntimeError(f"Narration word count {total_words}; expected 104-116")
     return data
 
 
 def cloudflare_image(prompt, output_path):
     if not (VISUALS_ENABLED and CF_TOKEN and CF_ACCOUNT):
         return False
-
     request_prompt = f"""Cinematic scientific visualization for a premium YouTube Shorts video, vertical 9:16.
 Photorealistic, dramatic but scientifically grounded, realistic scale, strong depth, clear foreground/midground/background, one obvious visual event.
 No text, letters, numbers, logos, labels, UI, watermark, captions or infographic elements. Original visual only.
 SCENE: {prompt}""".strip()[:3500]
     headers = {"Authorization": f"Bearer {CF_TOKEN}", "Content-Type": "application/json"}
-
     def request_model(model, label, steps=4):
         url = f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT}/ai/run/{model}"
         payload = {"prompt": request_prompt, "steps": steps}
@@ -259,14 +257,11 @@ SCENE: {prompt}""".strip()[:3500]
         except Exception as exc:
             print(f"{label} visual error: {exc}")
         return False
-
     if request_model(CF_MODEL, "Cloudflare primary", steps=4):
         return True
-
     if CF_FALLBACK_MODEL and CF_FALLBACK_MODEL != CF_MODEL:
         if request_model(CF_FALLBACK_MODEL, "Cloudflare fallback", steps=4):
             return True
-
     return False
 
 
@@ -384,8 +379,27 @@ def create_scene_voice(text, index):
 
 
 def create_music():
+    """Create an audible cinematic bed: low drone + pulse + high shimmer, with fades."""
     out = AUDIO / "music.m4a"
-    run(["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=110:sample_rate=44100", "-f", "lavfi", "-i", "sine=frequency=165:sample_rate=44100", "-t", str(DURATION), "-filter_complex", "[0:a]volume=0.030[a];[1:a]volume=0.014[b];[a][b]amix=inputs=2:duration=first,afade=t=in:st=0:d=2,afade=t=out:st=55:d=5", "-c:a", "aac", "-b:a", "128k", str(out)])
+    pad = ("aevalsrc=0.085*(sin(2*PI*55*t)+0.42*sin(2*PI*82.41*t)+"
+           "0.26*sin(2*PI*110*t))*(0.70+0.30*sin(2*PI*0.055*t)):s=44100:d=60")
+    pulse = ("aevalsrc=0.045*(0.55+0.45*sin(2*PI*1.6*t))*"
+             "(sin(2*PI*110*t)+0.38*sin(2*PI*220*t)):s=44100:d=60")
+    shimmer = ("aevalsrc=0.018*(0.5+0.5*sin(2*PI*0.42*t))*"
+               "(sin(2*PI*440*t)+0.22*sin(2*PI*660*t)):s=44100:d=60")
+    fc = (
+        "[0:a]pan=stereo|c0=c0|c1=c0,lowpass=f=950,volume=1.0[p];"
+        "[1:a]pan=stereo|c0=c0|c1=c0,lowpass=f=1900,volume=0.95[b];"
+        "[2:a]pan=stereo|c0=c0|c1=c0,lowpass=f=4200,volume=0.75[s];"
+        "[p][b][s]amix=inputs=3:duration=first:normalize=0,"
+        "afade=t=in:st=0:d=2,afade=t=out:st=55:d=5,"
+        "loudnorm=I=-24:TP=-2:LRA=7[m]"
+    )
+    run(["ffmpeg", "-y", "-f", "lavfi", "-i", pad,
+         "-f", "lavfi", "-i", pulse,
+         "-f", "lavfi", "-i", shimmer,
+         "-filter_complex", fc, "-map", "[m]", "-ar", "44100",
+         "-c:a", "aac", "-b:a", "128k", str(out)])
     return out
 
 
@@ -440,20 +454,31 @@ def create_transition_sfx(index):
 
 
 def fit_audio_to_scene(input_path, output_path):
-    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(input_path)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    """Keep speech natural: speed up only when it would overrun the 7.5s scene; never slow it down or pad it."""
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                            "-of", "default=noprint_wrappers=1:nokey=1", str(input_path)],
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     try:
         duration = float(probe.stdout.strip())
     except Exception:
-        duration = SCENE_DURATION
-    speed = max(1.0, duration / SCENE_DURATION)
+        duration = 0.0
+    if duration <= 0:
+        raise RuntimeError(f"Could not determine TTS duration for {input_path}")
+    target = SCENE_DURATION - 0.20
+    speed = duration / target
     filters = []
-    while speed > 2.0:
-        filters.append("atempo=2.0")
-        speed /= 2.0
-    filters.append(f"atempo={speed:.5f}" if speed > 1.001 else "anull")
-    filters.append(f"apad=pad_dur={SCENE_DURATION}")
-    filters.append(f"atrim=duration={SCENE_DURATION}")
-    run(["ffmpeg", "-y", "-i", str(input_path), "-af", ",".join(filters), "-ar", "44100", "-ac", "2", "-c:a", "aac", "-b:a", "128k", str(output_path)])
+    if speed > 1.02:
+        speed = min(speed, 1.35)
+        while speed > 2.0:
+            filters.append("atempo=2.0")
+            speed /= 2.0
+        filters.append(f"atempo={speed:.5f}")
+    else:
+        filters.append("anull")
+    filters.append("aresample=44100")
+    filters.append("asetpts=N/SR/TB")
+    run(["ffmpeg", "-y", "-i", str(input_path), "-af", ",".join(filters),
+         "-ar", "44100", "-ac", "2", "-c:a", "aac", "-b:a", "128k", str(output_path)])
     return output_path
 
 
@@ -467,19 +492,16 @@ def create_scene_audio(story):
         transition = create_transition_sfx(i) if i > 0 else None
         mixed = AUDIO / f"scene_mix_{i:02d}.m4a"
         inputs = [str(voice), str(sfx)]
-        filters = ["[0:a]volume=1.12[v]", "[1:a]volume=0.12[s]"]
+        filters = ["[0:a]volume=1.0[v]", "[1:a]volume=0.22[s]"]
         mix_inputs = "[v][s]"
         if transition:
             inputs.append(str(transition))
             filters.append("[2:a]volume=1.0[t]")
             mix_inputs += "[t]"
-            mix_filter = f"{mix_inputs}amix=inputs=3:duration=longest:dropout_transition=0.12,alimiter=limit=0.92[a]"
+            mix_filter = f"{mix_inputs}amix=inputs=3:duration=longest:dropout_transition=0.08,alimiter=limit=0.90[a]"
         else:
-            mix_filter = f"{mix_inputs}amix=inputs=2:duration=longest:dropout_transition=0.25,alimiter=limit=0.92[a]"
-        ff_inputs = []
-        for path in inputs:
-            ff_inputs += ["-i", path]
-        run(["ffmpeg", "-y", *ff_inputs, "-filter_complex", ";".join(filters + [mix_filter]), "-map", "[a]", "-t", str(SCENE_DURATION), "-c:a", "aac", "-b:a", "160k", str(mixed)])
+            mix_filter = f"{mix_inputs}amix=inputs=2:duration=longest:dropout_transition=0.12,alimiter=limit=0.90[a]"
+        run(["ffmpeg", "-y", *sum((["-i", p] for p in inputs), []), "-filter_complex", ";".join(filters + [mix_filter]), "-map", "[a]", "-t", str(SCENE_DURATION), "-c:a", "aac", "-b:a", "160k", str(mixed)])
         scene_clips.append(mixed)
     concat = AUDIO / "scene_audio_concat.txt"
     concat.write_text("\n".join(f"file '{p.as_posix()}'" for p in scene_clips), encoding="utf-8")
@@ -490,15 +512,25 @@ def create_scene_audio(story):
 
 def mix_audio(video, narration_sfx, music):
     audio = AUDIO / "final_audio.m4a"
-    run(["ffmpeg", "-y", "-i", str(narration_sfx), "-i", str(music), "-filter_complex", "[0:a]volume=1.0[n];[1:a]volume=0.55[m];[n][m]amix=inputs=2:duration=first:dropout_transition=2,alimiter=limit=0.9[a]", "-map", "[a]", "-t", str(DURATION), "-c:a", "aac", "-b:a", "192k", str(audio)])
-    run(["ffmpeg", "-y", "-i", str(video), "-i", str(audio), "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", str(VIDEO)])
+    fc = (
+        "[0:a]volume=1.0[n];"
+        "[1:a]volume=0.48[m];"
+        "[m][n]sidechaincompress=threshold=0.035:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"
+        "[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,"
+        "loudnorm=I=-15.5:TP=-1.2:LRA=8[a]"
+    )
+    run(["ffmpeg", "-y", "-i", str(narration_sfx), "-i", str(music),
+         "-filter_complex", fc, "-map", "[a]", "-t", str(DURATION),
+         "-ar", "44100", "-c:a", "aac", "-b:a", "192k", str(audio)])
+    run(["ffmpeg", "-y", "-i", str(video), "-i", str(audio), "-map", "0:v:0",
+         "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", str(VIDEO)])
     return VIDEO
 
 
 def save_metadata(story):
     title = safe_ascii(story.get("title", "WHAT IF DAILY"), 95)
-    desc = safe_ascii(story.get("description", ""), 4500) + "\n\nWHAT IF DAILY - IMAGINE. WATCH. WONDER.\n\nVisual format: cinematic scientific visualization + kinetic typography with scene-matched sound design."
-    data = {"title": title, "description": desc, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography + scene-matched sound design"}
+    desc = safe_ascii(story.get("description", ""), 4500) + "\n\nWHAT IF DAILY - IMAGINE. WATCH. WONDER.\n\nVisual format: cinematic scientific visualization + kinetic typography with audible cinematic music + scene-matched SFX."
+    data = {"title": title, "description": desc, "keywords": story.get("keywords", [])[:25], "hashtags": story.get("hashtags", [])[:8], "created_at": datetime.utcnow().isoformat() + "Z", "voice": VOICE, "tts_rate": TTS_RATE, "visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX"}
     METADATA.write_text(json.dumps(data, indent=2), encoding="utf-8")
     return data
 
