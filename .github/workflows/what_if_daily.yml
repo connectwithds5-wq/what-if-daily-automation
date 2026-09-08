@@ -12,9 +12,11 @@ on:
 
 permissions:
   contents: write
+
 concurrency:
   group: what-if-daily-topic
   cancel-in-progress: false
+
 jobs:
   generate-and-upload:
     runs-on: ubuntu-latest
@@ -24,15 +26,18 @@ jobs:
       GEMINI_MODEL: gemini-3.6-flash
       GEMINI_FALLBACK_MODEL: gemini-3.5-flash-lite
 
+      # Cinematic scene visuals
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_IMAGE_MODEL: "@cf/black-forest-labs/flux-1-schnell"
+      VISUALS_ENABLED: "true"
+
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
 
-      # The schedule itself determines which slot this is.
       RUN_SLOT: ${{ github.event.schedule == '30 13 * * *' && '0' || '1' }}
-
       PYTHONUNBUFFERED: "1"
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -54,44 +59,42 @@ jobs:
 
       - name: Validate secrets
         run: |
-          if [ -z "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY is missing"
-            exit 1
-          fi
+          test -n "$GEMINI_API_KEY" || { echo "GEMINI_API_KEY is missing"; exit 1; }
+          test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
+          echo "All required secrets are present."
 
-          if [ -z "$YOUTUBE_OAUTH_JSON" ]; then
-            echo "YOUTUBE_OAUTH_JSON is missing"
-            exit 1
-          fi
+      - name: Validate Python
+        run: |
+          python -m py_compile src/what_if_daily.py
+          echo "Python syntax OK."
 
-          echo "Required secrets are present."
-
-      - name: Generate WHAT IF DAILY video
+      - name: Generate WHAT IF DAILY V2 video
         run: |
           python src/what_if_daily.py
 
       - name: Verify generated files
         run: |
-          test -f output/what_if_daily.mp4
-          test -f output/metadata.json
-
+          test -s output/what_if_daily.mp4
+          test -s output/metadata.json
           echo "Generated files verified:"
           ls -lh output/what_if_daily.mp4
           ls -lh output/metadata.json
+
       - name: Save topic history
         if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add topic_history.json
-
           if git diff --cached --quiet; then
             echo "No topic history changes to commit."
           else
             git commit -m "Update WHAT IF DAILY topic history"
             git push
           fi
+
       - name: Cleanup generated files
         if: always()
         run: |
@@ -100,10 +103,8 @@ jobs:
 
       - name: Post Setup Python
         if: always()
-        run: |
-          python --version
+        run: python --version
 
       - name: Post Checkout repository
         if: always()
-        run: |
-          echo "WHAT IF DAILY workflow completed."
+        run: echo "WHAT IF DAILY workflow completed."
