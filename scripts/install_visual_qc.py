@@ -116,6 +116,49 @@ SCENE: {prompt}""".strip()[:12000]
     return False
 '''
 
+OVERLAY = r'''def overlay_frame(background, on_screen, narration, index, progress):
+    image = background.copy()
+    draw = ImageDraw.Draw(image, "RGBA")
+    for y in range(0, 430):
+        alpha = int(190 * (1 - y / 430))
+        draw.rectangle((0, y, WIDTH, y + 1), fill=(0, 0, 0, alpha))
+    for y in range(1450, HEIGHT):
+        alpha = int(210 * ((y - 1450) / (HEIGHT - 1450)))
+        draw.rectangle((0, y, WIDTH, y + 1), fill=(0, 0, 0, alpha))
+
+    small = font(30, True)
+    main = font(94, True)
+    sub = font(38)
+    draw.text((60, 60), "WHAT IF DAILY", font=small, fill=(255, 255, 255, 235))
+
+    # Scene counter intentionally removed for a cleaner cinematic frame.
+    on = safe_ascii(on_screen, 55).upper()
+    typed = on[:max(1, int(len(on) * progress))]
+    lines = wrap(typed, main, 900)[:3] or [""]
+    y = 560 - (len(lines) * 115) // 2
+    for line in lines:
+        bb = draw.textbbox((0, 0), line, font=main, stroke_width=3)
+        x = (WIDTH - (bb[2] - bb[0])) // 2
+        draw.text((x + 5, y + 7), line, font=main, fill=(0, 0, 0, 220), stroke_width=7, stroke_fill=(0, 0, 0, 230))
+        draw.text((x, y), line, font=main, fill=(255, 255, 255, 255), stroke_width=3, stroke_fill=(0, 0, 0, 255))
+        y += 115
+
+    # Narration/description is centered in the middle-lower area for readability,
+    # instead of being pinned to the bottom edge.
+    if progress > 0.45:
+        narration_lines = wrap(narration, sub, 900)[:3]
+        block_height = len(narration_lines) * 52
+        narration_y = 1020 - block_height // 2
+        for j, line in enumerate(narration_lines):
+            bb = draw.textbbox((0, 0), line, font=sub)
+            x = (WIDTH - (bb[2] - bb[0])) // 2
+            draw.text((x, narration_y + j * 52), line, font=sub, fill=(245, 245, 245, 240), stroke_width=2, stroke_fill=(0, 0, 0, 200))
+
+    draw.rectangle((60, 1815, WIDTH - 60, 1822), fill=(90, 90, 90, 170))
+    draw.rectangle((60, 1815, 60 + int((WIDTH - 120) * ((index + progress) / SCENES)), 1822), fill=(255, 255, 255, 240))
+    return image
+'''
+
 s = SOURCE.read_text(encoding="utf-8")
 
 # Keep the existing production audio/visual normalizer changes, but replace the Gemini image implementation with the supported SDK call.
@@ -125,13 +168,19 @@ if start < 0 or end < 0:
     raise RuntimeError("Could not locate gemini_image() boundaries")
 s = s[:start] + GEMINI_IMAGE.rstrip() + "\n\n" + s[end + 1:]
 
-# Add a second image-model fallback before Cloudflare by retaining the model loop above.
-# Ensure Cloudflare has a short retry window for transient 429s instead of immediately exhausting both providers.
+# Improve Cloudflare resilience for transient 429/5xx responses.
 s = s.replace(
     'if response.status_code in (429, 500, 502, 503, 504):\n                print(f"{label} temporary error {response.status_code}; switching immediately.")\n                return False',
     'if response.status_code in (429, 500, 502, 503, 504):\n                print(f"{label} temporary error {response.status_code}; retrying after backoff.")\n                for delay in (8, 16):\n                    time.sleep(delay)\n                    retry = requests.post(url, headers=headers, json=payload, timeout=180)\n                    if retry.status_code < 400:\n                        response = retry\n                        break\n                    response = retry\n                if response.status_code >= 400:\n                    print(f"{label} remained unavailable after backoff: {response.status_code}")\n                    return False',
     1,
 )
+
+# Replace overlay_frame with the cleaner layout.
+start = s.find("def overlay_frame(")
+end = s.find("\ndef create_typography_scene", start)
+if start < 0 or end < 0:
+    raise RuntimeError("Could not locate overlay_frame() boundaries")
+s = s[:start] + OVERLAY.rstrip() + "\n\n" + s[end + 1:]
 
 # Replace production QC installer and upload gate.
 start = s.find("def production_qc(")
@@ -153,4 +202,4 @@ elif "    production_qc(story)\n    upload_youtube(story)" not in s:
     raise RuntimeError("Could not locate upload_youtube() call")
 
 SOURCE.write_text(s, encoding="utf-8")
-print("Gemini image API and visual production QC gate installed.")
+print("Gemini image API, visual QC gate, and clean scene text layout installed.")
