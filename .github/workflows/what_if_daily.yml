@@ -21,12 +21,8 @@ jobs:
       GEMINI_MODEL: gemini-3.6-flash
       GEMINI_FALLBACK_MODEL: gemini-3.5-flash-lite
       GEMINI_IMAGE_MODEL: gemini-3.1-flash-image
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CLOUDFLARE_IMAGE_MODEL: "@cf/black-forest-labs/flux-1-schnell"
-      CLOUDFLARE_IMAGE_FALLBACK_MODEL: "@cf/bytedance/stable-diffusion-xl-lightning"
-      CLOUDFLARE_IMAGE_FALLBACK_2_MODEL: "@cf/stabilityai/stable-diffusion-xl-base-1.0"
-      CLOUDFLARE_IMAGE_FALLBACK_3_MODEL: "@cf/lykon/dreamshaper-8-lcm"
+      GEMINI_IMAGE_FALLBACK_MODEL: gemini-3-pro-image
+      GEMINI_IMAGE_FALLBACK_2_MODEL: gemini-2.5-flash-image
       VISUALS_ENABLED: "true"
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
       RUN_SLOT: ${{ github.event.schedule == '30 13 * * *' && '0' || '1' }}
@@ -56,9 +52,7 @@ jobs:
         run: |
           test -n "$GEMINI_API_KEY" || { echo "GEMINI_API_KEY is missing"; exit 1; }
           test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
-          test -n "$CLOUDFLARE_API_TOKEN" || { { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }; }
-          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
-          echo "Required credentials are present."
+          echo "Required Gemini and YouTube credentials are present."
 
       - name: Normalize production source
         run: |
@@ -72,7 +66,7 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Normalize production visual and audio pipeline"
+            git commit -m "Normalize Gemini-only visual and audio pipeline"
             git push
           fi
 
@@ -101,10 +95,12 @@ jobs:
       - name: Generate WHAT IF DAILY V2 video
         run: python src/what_if_daily_v2.py
 
-      - name: Verify generated files
+      - name: Production QC and file verification
         run: |
+          set -euo pipefail
           test -s output/what_if_daily.mp4
           test -s output/metadata.json
+          test -s output/visual_qc.json
           ffprobe -v error -show_streams -show_format -of json output/what_if_daily.mp4 > output/final_probe.json
           python - <<'PY'
           import json
@@ -114,20 +110,26 @@ jobs:
           video = next((x for x in streams if x.get("codec_type") == "video"), None)
           audio = next((x for x in streams if x.get("codec_type") == "audio"), None)
           if not video or not audio:
-              raise SystemExit("Verification failed: video/audio stream missing")
+              raise SystemExit("QC failed: video/audio stream missing")
           if (int(video.get("width", 0)), int(video.get("height", 0))) != (1080, 1920):
-              raise SystemExit("Verification failed: expected 1080x1920")
+              raise SystemExit("QC failed: expected 1080x1920")
           duration = float(probe.get("format", {}).get("duration", 0) or 0)
           if not 59.0 <= duration <= 60.5:
-              raise SystemExit(f"Verification failed: duration {duration:.2f}s")
+              raise SystemExit(f"QC failed: duration {duration:.2f}s")
           if int(audio.get("sample_rate", 0)) != 44100:
-              raise SystemExit("Verification failed: expected 44100 Hz audio")
-          print(f"Generated file verification passed: 1080x1920, {duration:.2f}s")
+              raise SystemExit("QC failed: expected 44100 Hz audio")
+          visuals = json.loads(Path("output/visual_qc.json").read_text())
+          generated = sum(1 for x in visuals if x.get("generated"))
+          if len(visuals) != 8:
+              raise SystemExit(f"QC failed: expected 8 visual records, got {len(visuals)}")
+          if generated < 6:
+              raise SystemExit(f"QC failed: Gemini generated visuals only {generated}/8; minimum is 6/8")
+          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, 44.1kHz audio, Gemini visuals {generated}/8")
           PY
-          ls -lh output/what_if_daily.mp4 output/metadata.json
+          ls -lh output/what_if_daily.mp4 output/metadata.json output/visual_qc.json
 
       - name: Save topic history
-        if: always()
+        if: success()
         run: |
           if [ ! -f topic_history.json ]; then
             echo "No topic history file created; nothing to save."
