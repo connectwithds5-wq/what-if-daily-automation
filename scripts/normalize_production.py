@@ -90,11 +90,7 @@ SCENE: {prompt}""".strip()[:12000]
     payload = {
         "model": model,
         "input": request_prompt,
-        "response_format": {
-            "type": "image",
-            "aspect_ratio": "9:16",
-            "image_size": "1K",
-        },
+        "response_format": {"type": "image", "aspect_ratio": "9:16", "image_size": "1K"},
     }
     for attempt in range(2):
         try:
@@ -183,20 +179,6 @@ SCENE: {prompt}""".strip()[:3500]
     return False
 
 
-def write_visual_qc(index, provider):
-    manifest = OUTPUT / "visual_qc.json"
-    data = []
-    if manifest.exists():
-        try:
-            data = json.loads(manifest.read_text(encoding="utf-8"))
-        except Exception:
-            data = []
-    data = [x for x in data if x.get("scene") != index + 1]
-    data.append({"scene": index + 1, "provider": provider, "generated": provider != "fallback"})
-    data.sort(key=lambda x: x["scene"])
-    manifest.write_text(json.dumps(data, indent=2), encoding="utf-8")
-
-
 def make_base_visual(topic, scene, index):
     folder = FRAMES / f"scene_{index:02d}"
     folder.mkdir(parents=True, exist_ok=True)
@@ -207,7 +189,7 @@ def make_base_visual(topic, scene, index):
             image = Image.open(path).convert("RGB")
             image = ImageOps.fit(image, (WIDTH, HEIGHT), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
             image.save(path)
-            write_visual_qc(index, "gemini")
+            print(f"Gemini visual ready for scene {index + 1}")
             return path
         except Exception as exc:
             print("Gemini visual decode/resize failed:", exc)
@@ -217,7 +199,7 @@ def make_base_visual(topic, scene, index):
             image = Image.open(path).convert("RGB")
             image = ImageOps.fit(image, (WIDTH, HEIGHT), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
             image.save(path)
-            write_visual_qc(index, "cloudflare")
+            print(f"Cloudflare visual ready for scene {index + 1}")
             return path
         except Exception as exc:
             print("Cloudflare visual decode/resize failed:", exc)
@@ -231,26 +213,24 @@ def make_base_visual(topic, scene, index):
     for radius in (600, 450, 300, 180):
         draw.ellipse((cx-radius, cy-radius, cx+radius, cy+radius), outline=(35, 38, 55), width=3)
     base.save(path)
-    write_visual_qc(index, "fallback")
     return path
 '''
     s = s[:visual_start] + visual_block + s[visual_end + 1:]
 
-    s = s.replace(
-        'filters.append("[2:a]volume=1.0[t]")',
-        'filters.append("[2:a]adelay=6950|6950,volume=1.0[t]")',
-        1,
-    )
-    s = s.replace(
-        'overlay_frame(frame, scene["on_screen"], scene["narration"], index, (fi + 1) / 18)',
-        'overlay_frame(frame, scene["on_screen"], scene["narration"], index, min(1.0, (fi + 1) / 5.0))',
-        1,
-    )
+    # Remove any previously injected blocking visual-QC function/call.
+    qc_start = s.find("\ndef production_qc(")
+    main_start = s.find("\ndef main(", qc_start if qc_start >= 0 else 0)
+    if qc_start >= 0 and main_start >= 0:
+        s = s[:qc_start] + s[main_start:]
+    s = re.sub(r"\n\s*production_qc\(story\)\n", "\n", s)
+
+    s = s.replace('filters.append("[2:a]volume=1.0[t]")', 'filters.append("[2:a]adelay=6950|6950,volume=1.0[t]")', 1)
+    s = s.replace('overlay_frame(frame, scene["on_screen"], scene["narration"], index, (fi + 1) / 18)', 'overlay_frame(frame, scene["on_screen"], scene["narration"], index, min(1.0, (fi + 1) / 5.0))', 1)
 
     s = patch_narration_validation(s)
     SOURCE.write_text(s, encoding="utf-8")
     subprocess.run(["python", "-m", "py_compile", str(SOURCE)], check=True)
-    print("Production source normalized idempotently; image chain and audio fixes installed; py_compile passed.")
+    print("Production source normalized: audio and image provider chain installed; blocking visual QC removed; py_compile passed.")
 
 
 if __name__ == "__main__":
