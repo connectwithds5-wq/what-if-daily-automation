@@ -59,23 +59,26 @@ def main() -> None:
     if 'def load_growth_strategy()' not in s:
         s = s.replace('\ndef generate_unique_topic():', strategy_block + '\n\ndef generate_unique_topic():', 1)
 
+    # Analytics strategy is the decision gate: if the strategy file contains
+    # explicit next-best topics, choose one of those; otherwise use its
+    # slot/lane guidance and rank a fresh topic with Gemini.
     old_topic_prompt = '''    prompt = f"""\nYou create one fresh topic for a YouTube Shorts channel called WHAT IF DAILY.\nReturn ONLY one topic, no quotes, no numbering.\nIt must start with What If and be scientifically plausible, surprising, highly visual, and different from all previous topics.\nKeep it under 80 characters.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
-    new_topic_prompt = '''    strategy, slot = strategy_context()\n    prompt = f"""\nYou are the AI growth strategist and topic editor for the YouTube Shorts channel WHAT IF DAILY.\nGenerate ONE fresh topic for this upload slot.\nReturn ONLY one topic, no quotes, no numbering.\nThe topic must start with What If, stay scientifically plausible, be highly visual, and be understandable worldwide by a general English audience.\nOptimize for curiosity {strategy.get("ranking_objective", {}).get("curiosity", 0.25)}, broad appeal {strategy.get("ranking_objective", {}).get("broad_appeal", 0.20)}, visual impact {strategy.get("ranking_objective", {}).get("visual_impact", 0.18)}, retention {strategy.get("ranking_objective", {}).get("retention_potential", 0.17)}, comment potential {strategy.get("ranking_objective", {}).get("comment_debate", 0.08)}.\nCurrent slot: {RUN_SLOT} - {slot.get("name", "Universal Curiosity")}\nPreferred topic lanes: {json.dumps(slot.get("best_lanes", []))}\nPreferred style: {slot.get("style", "surprising and visual")}\nKeep it under 80 characters.\nAvoid narrow academic topics, generic facts, repeated ideas, and unsupported speculation.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
+    new_topic_prompt = '''    strategy, slot = strategy_context()\n    recommended = strategy.get("next_best_topics", [])\n    rec_lines = []\n    for item in recommended[:5]:\n        if isinstance(item, dict):\n            rec_lines.append({"topic": item.get("topic", ""), "hook": item.get("hook", ""), "reason": item.get("reason", ""), "confidence": item.get("confidence", strategy.get("confidence", "medium"))})\n    prompt = f"""\nYou are the AI growth strategist and final topic selector for WHAT IF DAILY.\nGenerate ONE fresh topic for the current upload slot using the latest analytics strategy below.\nReturn ONLY one topic, no quotes, no numbering.\nThe topic must start with What If, stay scientifically plausible, be highly visual, and be understandable worldwide by a general English audience.\nCurrent slot: {RUN_SLOT} - {slot.get("name", "Universal Curiosity")}\nPreferred lanes: {json.dumps(slot.get("best_lanes", []))}\nPreferred style: {slot.get("style", "surprising and visual")}\nLatest analytics recommendations, if present: {json.dumps(rec_lines, ensure_ascii=False)}\nRanking weights: {json.dumps(strategy.get("ranking_objective", {}))}\nDecision rule: prefer an analytics-recommended direction when present and adapt it into a fresh original What If question; never copy a recommended title verbatim. If no explicit recommendation exists, rank a fresh topic using the slot lanes and ranking weights.\nAvoid narrow academic topics, generic facts, repeated ideas, and unsupported speculation.\nKeep it under 80 characters.\nPrevious topics:\n{json.dumps(history[-200:], ensure_ascii=False)}\n"""'''
     if old_topic_prompt in s:
         s = s.replace(old_topic_prompt, new_topic_prompt, 1)
 
     # Add strategy context to story generation so title, hook, visuals and
-    # payoff are optimized for the selected slot.
+    # payoff are optimized for the selected slot and analytics direction.
     s = s.replace(
         'def create_story(topic):\n    prompt = f"""\nCreate an exciting 60-second WHAT IF DAILY science short about: {topic}',
-        'def create_story(topic):\n    strategy, slot = strategy_context()\n    prompt = f"""\nCreate an exciting 58-second WHAT IF DAILY science short about: {topic}\nThis is upload slot {RUN_SLOT}: {slot.get("name", "Universal Curiosity")}.\nUse these preferred lanes: {json.dumps(slot.get("best_lanes", []))}.\nOptimize for broad appeal, immediate curiosity, strong visual transformation, high retention, and a surprising final payoff.\nDo not make the title clickbait that the video cannot deliver.',
+        'def create_story(topic):\n    strategy, slot = strategy_context()\n    prompt = f"""\nCreate an exciting 58-second WHAT IF DAILY science short about: {topic}\nThis is upload slot {RUN_SLOT}: {slot.get("name", "Universal Curiosity")}.\nUse these preferred lanes: {json.dumps(slot.get("best_lanes", []))}.\nAnalytics ranking weights: {json.dumps(strategy.get("ranking_objective", {}))}.\nOptimize for broad appeal, immediate curiosity, strong visual transformation, high retention, and a surprising final payoff.\nDo not make the title clickbait that the video cannot deliver.',
         1,
     )
 
     # Store strategy metadata in each generated artifact for later analysis.
     s = s.replace(
         '"visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX"}',
-        '"visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX", "growth_strategy_slot": RUN_SLOT, "growth_strategy_name": strategy_context()[1].get("name", "Universal Curiosity")}',
+        '"visual_style": "cinematic scientific visualization + kinetic typography + audible cinematic music + scene-matched SFX", "growth_strategy_slot": RUN_SLOT, "growth_strategy_name": strategy_context()[1].get("name", "Universal Curiosity"), "analytics_strategy_applied": True}',
         1,
     )
 
@@ -88,7 +91,7 @@ def main() -> None:
 
     SOURCE.write_text(s, encoding="utf-8")
     subprocess.run(["python", "-m", "py_compile", str(SOURCE)], check=True)
-    print("Production source normalized: QC removed, image quota circuit breaker enabled, AI growth strategy enabled, bird SFX fixed, and pacing optimized to 7.25s per scene (~58s total).")
+    print("Production source normalized: analytics-driven topic selection enabled, QC removed, image quota circuit breaker enabled, bird SFX fixed, and pacing optimized to 7.25s per scene (~58s total).")
 
 
 if __name__ == "__main__":
