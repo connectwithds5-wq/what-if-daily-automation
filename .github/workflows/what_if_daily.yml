@@ -21,7 +21,6 @@ jobs:
       GEMINI_MODEL: gemini-3.6-flash
       GEMINI_FALLBACK_MODEL: gemini-3.5-flash-lite
       GEMINI_IMAGE_ENABLED: "false"
-      GEMINI_IMAGE_MODEL: gemini-3.1-flash-image
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_IMAGE_MODEL: "@cf/black-forest-labs/flux-1-schnell"
@@ -59,37 +58,24 @@ jobs:
           test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
-          echo "Text/TTS/upload and Cloudflare visual credentials are present."
-          echo "Gemini image generation disabled to keep this workflow free."
+          echo "Gemini 3.6 story/TTS/upload and Cloudflare visual credentials are present."
+          echo "Gemini native image generation is disabled."
 
       - name: Normalize production source
         run: |
           python scripts/normalize_production.py
           python scripts/install_visual_qc.py
-          python scripts/ensure_visual_pipeline.py
-          python - <<'PY'
-          from pathlib import Path
-          p = Path("src/what_if_daily_v2.py")
-          s = p.read_text(encoding="utf-8")
-          old = '    if generated < 6:\n        raise RuntimeError(f"QC failed: only {generated}/{SCENES} scenes have real generated visuals")'
-          new = '    if generated < 0:\n        raise RuntimeError(f"QC failed: only {generated}/{SCENES} scenes have real generated visuals")'
-          if old in s:
-              s = s.replace(old, new, 1)
-          p.write_text(s, encoding="utf-8")
-          print("Fallback-upload mode enabled: generated visuals are preferred, but provider failure will not block backup video upload.")
-          PY
           git diff --check
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
-          python -m py_compile scripts/ensure_visual_pipeline.py
           git add src/what_if_daily_v2.py
           if git diff --cached --quiet; then
             echo "Production source already normalized."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Enable safe fallback visual upload"
+            git commit -m "Simplify production visual fallback"
             git push
           fi
 
@@ -104,7 +90,6 @@ jobs:
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
-          python -m py_compile scripts/ensure_visual_pipeline.py
           echo "Python syntax checks PASSED."
 
       - name: Audio filter smoke test
@@ -129,7 +114,6 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
           probe = json.loads(Path("output/final_probe.json").read_text())
           streams = probe.get("streams", [])
           video = next((x for x in streams if x.get("codec_type") == "video"), None)
@@ -150,7 +134,7 @@ jobs:
           if len(visual_qc) != 8:
               raise SystemExit(f"QC failed: expected 8 visual records, got {len(visual_qc)}")
           generated = sum(1 for x in visual_qc if x.get("generated"))
-          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, audio {audio_duration:.2f}s, visuals {generated}/8 (fallback upload permitted)")
+          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, audio {audio_duration:.2f}s, visuals {generated}/8; fallback upload allowed")
           PY
           ls -lh output/what_if_daily.mp4 output/metadata.json output/visual_qc.json
 
