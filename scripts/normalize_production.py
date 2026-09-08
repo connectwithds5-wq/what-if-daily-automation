@@ -18,11 +18,28 @@ def main() -> None:
         '    if not 100 <= total_words <= 116:\n        raise RuntimeError(f"Narration word count {total_words}; expected 100-116")',
     )
 
-    # Reduce dead air between scene narrations. Each scene is 7.5s; leave only
-    # 0.05s of intentional boundary space instead of the old 0.20s.
+    # Faster pacing: 8 scenes now total 58 seconds instead of 60 seconds.
+    # This removes unnecessary empty time while keeping every scene long enough
+    # for the narration and visual beat.
+    s = s.replace(
+        'SCENE_DURATION = DURATION / SCENES',
+        'SCENE_DURATION = 7.25',
+    )
+
+    # Leave only ~0.10s at the end of each scene for a natural handoff.
     s = s.replace(
         '    target = SCENE_DURATION - 0.20',
+        '    target = SCENE_DURATION - 0.10',
+    )
+    s = s.replace(
         '    target = SCENE_DURATION - 0.05',
+        '    target = SCENE_DURATION - 0.10',
+    )
+
+    # Keep the transition SFX inside the shorter 7.25s scene.
+    s = s.replace(
+        'adelay=6950|6950,volume=1.0[t]',
+        'adelay=6700|6700,volume=1.0[t]',
     )
 
     # Image quota circuit breaker: once a model is quota-exhausted, do not
@@ -53,7 +70,7 @@ def main() -> None:
 
     SOURCE.write_text(s, encoding="utf-8")
     subprocess.run(["python", "-m", "py_compile", str(SOURCE)], check=True)
-    print("Production source normalized: QC removed, image quota circuit breaker enabled, bird SFX fixed, and scene silence reduced to 0.05s.")
+    print("Production source normalized: QC removed, image quota circuit breaker enabled, bird SFX fixed, and pacing optimized to 7.25s per scene (~58s total).")
 
 
 if __name__ == "__main__":
