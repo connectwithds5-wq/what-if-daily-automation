@@ -21,6 +21,7 @@ jobs:
       GEMINI_MODEL: gemini-3.6-flash
       GEMINI_FALLBACK_MODEL: gemini-3.5-flash-lite
       GEMINI_IMAGE_ENABLED: "false"
+      GEMINI_IMAGE_MODEL: gemini-3.1-flash-image
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_IMAGE_MODEL: "@cf/black-forest-labs/flux-1-schnell"
@@ -58,18 +59,20 @@ jobs:
           test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is missing"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
-          echo "Gemini 3.6 story/TTS/upload and Cloudflare visual credentials are present."
-          echo "Gemini native image generation is disabled."
+          echo "Required credentials are present."
+          echo "Gemini native image generation remains disabled to avoid unexpected image charges."
 
       - name: Normalize production source
         run: |
           python scripts/normalize_production.py
           python scripts/install_visual_qc.py
+          python scripts/fix_visual_base.py
           python scripts/allow_fallback_qc.py
           git diff --check
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
+          python -m py_compile scripts/fix_visual_base.py
           python -m py_compile scripts/allow_fallback_qc.py
           git add src/what_if_daily_v2.py
           if git diff --cached --quiet; then
@@ -77,7 +80,7 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Allow final dark visual fallback"
+            git commit -m "Normalize production visual pipeline"
             git push
           fi
 
@@ -92,6 +95,7 @@ jobs:
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/install_visual_qc.py
+          python -m py_compile scripts/fix_visual_base.py
           python -m py_compile scripts/allow_fallback_qc.py
           echo "Python syntax checks PASSED."
 
@@ -137,7 +141,7 @@ jobs:
           if len(visual_qc) != 8:
               raise SystemExit(f"QC failed: expected 8 visual records, got {len(visual_qc)}")
           generated = sum(1 for x in visual_qc if x.get("generated"))
-          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, audio {audio_duration:.2f}s, visuals {generated}/8; fallback upload allowed")
+          print(f"PRODUCTION QC PASSED: 1080x1920, {duration:.2f}s, audio {audio_duration:.2f}s, visuals {generated}/8")
           PY
           ls -lh output/what_if_daily.mp4 output/metadata.json output/visual_qc.json
 
