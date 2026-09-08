@@ -62,46 +62,82 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
           echo "All required secrets are present."
 
-      - name: Ensure audio filter graph is fixed
+      - name: Normalize production audio pipeline
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           p = Path("src/what_if_daily_v2.py")
           s = p.read_text(encoding="utf-8")
 
-          replacements = [
-              ('"[0:a]volume=1.0[n];"', '"[0:a]volume=1.0,asplit=2[n][sc];"'),
-              ('"[1:a]volume=0.62[m];"', '"[1:a]volume=0.72[m];"'),
-              ('"[1:a]volume=0.48[m];"', '"[1:a]volume=0.72[m];"'),
-              ('"[m][n]sidechaincompress=', '"[m][sc]sidechaincompress='),
-          ]
+          # Replace the whole mix_audio function by function boundaries, not by fragile text matching.
+          start = s.find("def mix_audio(")
+          end = s.find("\ndef write_metadata", start)
+          if start < 0 or end < 0:
+              raise SystemExit("Could not locate mix_audio function boundaries")
 
-          changed = False
-          for old, new in replacements:
-              if old in s:
-                  s = s.replace(old, new, 1)
-                  changed = True
+          new_mix = '''def mix_audio(video, narration_sfx, music):
+              audio = AUDIO / "final_audio.m4a"
+              # Split narration so the same stream can drive the ducking detector and final mix.
+              fc = (
+                  "[0:a]volume=1.0,asplit=2[n][sc];"
+                  "[1:a]volume=0.68[m];"
+                  "[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];"
+                  "[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,"
+                  "loudnorm=I=-15.5:TP=-1.2:LRA=8[a]"
+              )
+              run(["ffmpeg", "-y", "-i", str(narration_sfx), "-i", str(music),
+                   "-filter_complex", fc, "-map", "[a]", "-t", str(DURATION),
+                   "-ar", "44100", "-c:a", "aac", "-b:a", "192k", str(audio)])
+              run(["ffmpeg", "-y", "-i", str(video), "-i", str(audio), "-map", "0:v:0",
+                   "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", str(VIDEO)])
 
-          # If this source was already repaired, leave it untouched.
-          if "asplit=2[n][sc]" not in s or "[m][sc]sidechaincompress=" not in s:
-              raise SystemExit("Audio filter graph could not be fixed safely")
+          '''
+          s = s[:start] + new_mix + s[end + 1:]
+
+          # Transition SFX belongs at the scene boundary, not at time zero of every scene.
+          s = s.replace('filters.append("[2:a]volume=1.0[t]")',
+                        'filters.append("[2:a]adelay=6950|6950,volume=1.0[t]")', 1)
+
+          # Make the opening headline fully readable quickly instead of revealing one letter at a time.
+          s = s.replace('overlay_frame(frame, scene["on_screen"], scene["narration"], index, (fi + 1) / 18)',
+                        'overlay_frame(frame, scene["on_screen"], scene["narration"], index, min(1.0, (fi + 1) / 5.0))', 1)
 
           p.write_text(s, encoding="utf-8")
-          print("Audio filter graph ready: narration is split before sidechain compression.")
+          print("Production audio pipeline normalized.")
           PY
 
+          git diff --check
           git diff -- src/what_if_daily_v2.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/what_if_daily_v2.py
-          git commit -m "Fix audio sidechain filter graph" || true
-          git push || true
+          git commit -m "Harden audio mix and scene transitions" || true
+          git push
 
-      - name: Validate Python
+      - name: Validate workflow and Python
         run: |
+          python - <<'PY'
+          import yaml
+          with open(".github/workflows/what_if_daily.yml", "r", encoding="utf-8") as f:
+              yaml.safe_load(f)
+          print("Workflow YAML parse OK.")
+          PY
           python -m py_compile src/what_if_daily_v2.py
           echo "Python V2 syntax OK."
+
+      - name: Audio filter smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          ffmpeg -hide_banner -loglevel error \
+            -f lavfi -i "sine=frequency=440:duration=3" \
+            -f lavfi -i "sine=frequency=120:duration=3" \
+            -filter_complex "[0:a]volume=1.0,asplit=2[n][sc];[1:a]volume=0.68[m];[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,loudnorm=I=-15.5:TP=-1.2:LRA=8[a]" \
+            -map "[a]" -t 3 -f null -
+          echo "FFmpeg audio sidechain smoke test PASSED."
 
       - name: Generate WHAT IF DAILY V2 video
         run: |
@@ -111,7 +147,11 @@ jobs:
         run: |
           test -s output/what_if_daily.mp4
           test -s output/metadata.json
-          echo "Generated files verified:"
+          ffprobe -v error -select_streams v:0 -show_entries stream=width,height,duration \
+            -of default=noprint_wrappers=1 output/what_if_daily.mp4
+          ffprobe -v error -select_streams a:0 -show_entries stream=codec_name,sample_rate,duration \
+            -of default=noprint_wrappers=1 output/what_if_daily.mp4
+          echo "Generated files verified."
           ls -lh output/what_if_daily.mp4
           ls -lh output/metadata.json
 
