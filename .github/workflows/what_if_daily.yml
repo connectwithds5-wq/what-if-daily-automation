@@ -47,9 +47,23 @@ jobs:
 
       - name: Configure Git authentication
         run: |
+          set -euo pipefail
           test -n "$WORKFLOW_PAT" || { echo "WORKFLOW_PAT is missing"; exit 1; }
-          git remote set-url origin "https://x-access-token:${WORKFLOW_PAT}@github.com/${GITHUB_REPOSITORY}.git"
-          echo "Git authentication configured for workflow pushes."
+          git config --local --unset-all credential.helper || true
+          cat > "$RUNNER_TEMP/git-askpass.sh" <<'EOF'
+          #!/usr/bin/env bash
+          case "$1" in
+            *Username*) printf '%s\n' 'x-access-token' ;;
+            *Password*) printf '%s\n' "$WORKFLOW_PAT" ;;
+            *) exit 1 ;;
+          esac
+          EOF
+          chmod 700 "$RUNNER_TEMP/git-askpass.sh"
+          echo "GIT_ASKPASS=$RUNNER_TEMP/git-askpass.sh" >> "$GITHUB_ENV"
+          echo "GIT_TERMINAL_PROMPT=0" >> "$GITHUB_ENV"
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git ls-remote origin HEAD >/dev/null
+          echo "Git PAT authentication preflight PASSED."
 
       - name: Setup Python
         uses: actions/setup-python@v5
