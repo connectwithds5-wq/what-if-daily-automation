@@ -143,9 +143,11 @@ jobs:
       - name: Normalize production source
         run: |
           python scripts/normalize_production.py
+          python scripts/smooth_scene_transitions.py
           git diff --check
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
+          python -m py_compile scripts/smooth_scene_transitions.py
           git add src/what_if_daily_v2.py
           if git diff --cached --quiet; then
             echo "Production source already normalized."
@@ -172,6 +174,7 @@ jobs:
           PY
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
+          python -m py_compile scripts/smooth_scene_transitions.py
           python -m py_compile scripts/enforce_story_word_limit.py
           python -m py_compile src/analytics_strategy.py
           python -m py_compile src/update_posting_schedule.py
