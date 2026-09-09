@@ -470,21 +470,53 @@ def create_typography_scene(topic, scene, index):
 
 
 def create_video(scene_info):
+    # SMOOTH_TRANSITIONS_V2: short visual crossfades at scene boundaries.
+    # Each clip is extended just enough to overlap the next scene while
+    # keeping visual scene timing aligned with the 7.25s audio scene grid.
     clips = []
+    clip_duration = 7.46875
+    transition = 0.25
     for i, info in enumerate(scene_info):
         clip = OUTPUT / f"clip_{i:02d}.mp4"
         txt = OUTPUT / f"typing_{i:02d}.txt"
         lines = []
         for p in info["frames"]:
             lines += [f"file '{Path(p).as_posix()}'", "duration 0.10"]
-        lines += [f"file '{Path(info['frames'][-1]).as_posix()}'", f"duration {SCENE_DURATION-1.8:.3f}", f"file '{Path(info['frames'][-1]).as_posix()}'"]
+        hold = clip_duration - (len(info["frames"]) * 0.10)
+        lines += [
+            f"file '{Path(info['frames'][-1]).as_posix()}'",
+            f"duration {max(0.10, hold):.3f}",
+            f"file '{Path(info['frames'][-1]).as_posix()}'",
+        ]
         txt.write_text("\n".join(lines), encoding="utf-8")
-        run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(txt), "-vf", "fps=30,format=yuv420p", "-t", str(SCENE_DURATION), "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", str(clip)])
+        run([
+            "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(txt),
+            "-vf", "fps=30,format=yuv420p", "-t", str(clip_duration), "-an",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+            "-pix_fmt", "yuv420p", str(clip),
+        ])
         clips.append(clip)
-    alltxt = OUTPUT / "concat.txt"
-    alltxt.write_text("\n".join(f"file '{p.as_posix()}'" for p in clips), encoding="utf-8")
+
+    # xfade keeps the change between scenes smooth instead of a hard cut.
+    inputs = []
+    for clip in clips:
+        inputs += ["-i", str(clip)]
+    current = "[0:v]"
+    offset = clip_duration - transition
+    filter_complex = ""
+    for i in range(1, len(clips)):
+        out = f"[v{i}]"
+        fc = f"{current}[{i}:v]xfade=transition=fade:duration={transition}:offset={offset:.5f}{out}"
+        filter_complex = fc if not filter_complex else filter_complex + ";" + fc
+        current = out
+        offset += clip_duration - transition
+
     silent = OUTPUT / "video_silent.mp4"
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(alltxt), "-c", "copy", str(silent)])
+    run([
+        "ffmpeg", "-y", *inputs, "-filter_complex", filter_complex,
+        "-map", current, "-t", str(DURATION), "-an", "-c:v", "libx264",
+        "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", str(silent),
+    ])
     return silent
 
 
