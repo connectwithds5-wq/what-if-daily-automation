@@ -1,7 +1,16 @@
 {
-  "updated_at": "2026-09-09T03:34:32.142286+00:00",
+  "updated_at": "2026-09-09T04:55:46.641159+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "-XeDltocXOU",
+      "title": "What If Saturn Replaced Our Moon?",
+      "published_at": "2026-09-09T03:37:15Z",
+      "views": 35,
+      "likes": 3,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "rQ8N-hUB4SM",
       "title": "What If A Second Sun Entered Our Solar System?",
@@ -51,8 +60,8 @@
       "video_id": "DokAM9ig7L0",
       "title": "What If Earth Stopped For One Second?",
       "published_at": "2026-09-08T07:45:00Z",
-      "views": 304,
-      "likes": 5,
+      "views": 305,
+      "likes": 6,
       "comments": 2,
       "duration": "PT1M1S"
     },
@@ -60,8 +69,8 @@
       "video_id": "OKz2LOxi0C0",
       "title": "What If All Lightning Struck At The Same Second?",
       "published_at": "2026-09-07T17:09:33Z",
-      "views": 291,
-      "likes": 2,
+      "views": 303,
+      "likes": 3,
       "comments": 0,
       "duration": "PT1M1S"
     },
@@ -69,7 +78,7 @@
       "video_id": "oMs1yyS8hn4",
       "title": "What If Oceans Froze From the Bottom Up?",
       "published_at": "2026-09-07T13:41:42Z",
-      "views": 190,
+      "views": 192,
       "likes": 1,
       "comments": 0,
       "duration": "PT1M1S"
@@ -78,7 +87,7 @@
       "video_id": "KOaRpTBNAJY",
       "title": "What If Earth Lost Its Atmosphere for 5 Seconds?",
       "published_at": "2026-09-07T12:08:01Z",
-      "views": 849,
+      "views": 852,
       "likes": 18,
       "comments": 0,
       "duration": "PT1M1S"
@@ -87,7 +96,7 @@
       "video_id": "qhCPG8tTES0",
       "title": "What If Sound Could Travel Through Space?",
       "published_at": "2026-09-07T04:47:00Z",
-      "views": 639,
+      "views": 645,
       "likes": 11,
       "comments": 0,
       "duration": "PT1M1S",
@@ -840,84 +849,7 @@
         "shares": 1,
         "subscribersGained": 1,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.3353,
-          "relative_retention": 0.6293
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.3324,
-          "relative_retention": 0.5746
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.3265,
-          "relative_retention": 0.5284
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.3206,
-          "relative_retention": 0.501
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.3147,
-          "relative_retention": 0.4894
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.3029,
-          "relative_retention": 0.4859
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.2971,
-          "relative_retention": 0.4854
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.2559,
-          "relative_retention": 0.4859
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 1.2059,
-          "relative_retention": 0.4873
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 1.0971,
-          "relative_retention": 0.489
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.6853,
-          "relative_retention": 0.4993
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.6794,
-          "relative_retention": 0.4993
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.6735,
-          "relative_retention": 0.4992
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.6559,
-          "relative_retention": 0.4992
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.4412,
-          "relative_retention": 0.4993
-        }
-      ]
+      }
     },
     {
       "video_id": "ass1B5DEkKI",
