@@ -216,9 +216,13 @@ YOUTUBE DATA:
 
 
 def generate_strategy_with_retry(client, prompt):
-    """Handle temporary Gemini overload without losing the analytics run."""
+    """Try stable/current Gemini models and skip unavailable model IDs."""
     models = [GEMINI_MODEL]
-    for raw in os.environ.get("GEMINI_FALLBACK_MODELS", "gemini-3.6-flash-lite,gemini-2.5-flash").split(","):
+    fallback_value = os.environ.get(
+        "GEMINI_FALLBACK_MODELS",
+        "gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash",
+    )
+    for raw in fallback_value.split(","):
         model = raw.strip()
         if model and model not in models:
             models.append(model)
@@ -237,7 +241,13 @@ def generate_strategy_with_retry(client, prompt):
                 last_error = exc
                 status = getattr(exc, "status_code", None)
                 message = str(exc)
-                temporary = status in (429, 500, 502, 503, 504) or any(code in message for code in ("429", "500", "502", "503", "504", "UNAVAILABLE", "high demand"))
+                not_found = status == 404 or "NOT_FOUND" in message or "not found for API version" in message
+                temporary = status in (429, 500, 502, 503, 504) or any(
+                    code in message for code in ("429", "500", "502", "503", "504", "UNAVAILABLE", "high demand")
+                )
+                if not_found:
+                    print(f"Gemini model {model} is unavailable; skipping to the next fallback.")
+                    break
                 if not temporary:
                     raise
                 if attempt < 3:
