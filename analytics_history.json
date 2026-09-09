@@ -1,21 +1,21 @@
 {
-  "updated_at": "2026-09-09T04:55:46.641159+00:00",
+  "updated_at": "2026-09-09T12:28:34.856997+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
     {
       "video_id": "-XeDltocXOU",
       "title": "What If Saturn Replaced Our Moon?",
       "published_at": "2026-09-09T03:37:15Z",
-      "views": 35,
-      "likes": 3,
-      "comments": 0,
+      "views": 104,
+      "likes": 4,
+      "comments": 2,
       "duration": "PT59S"
     },
     {
       "video_id": "rQ8N-hUB4SM",
       "title": "What If A Second Sun Entered Our Solar System?",
       "published_at": "2026-09-08T17:16:16Z",
-      "views": 147,
+      "views": 166,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -24,8 +24,8 @@
       "video_id": "ELXgl8xz-wE",
       "title": "What If You Could See Every Wi-Fi Signal?",
       "published_at": "2026-09-08T14:12:39Z",
-      "views": 7,
-      "likes": 0,
+      "views": 16,
+      "likes": 1,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -33,7 +33,7 @@
       "video_id": "7thBkWfXx20",
       "title": "What If Earth's Atmosphere Turned Neon Pink?",
       "published_at": "2026-09-08T12:46:20Z",
-      "views": 125,
+      "views": 137,
       "likes": 1,
       "comments": 0,
       "duration": "PT1M1S"
@@ -42,7 +42,7 @@
       "video_id": "as8bNSvrk78",
       "title": "What If All Clouds Turned to Solid Ice?",
       "published_at": "2026-09-08T10:13:47Z",
-      "views": 142,
+      "views": 160,
       "likes": 1,
       "comments": 0,
       "duration": "PT1M1S"
@@ -51,7 +51,7 @@
       "video_id": "p2vbKrqcVvo",
       "title": "What If All Sand Turned to Glass?",
       "published_at": "2026-09-08T09:04:14Z",
-      "views": 18,
+      "views": 19,
       "likes": 0,
       "comments": 0,
       "duration": "PT1M1S"
@@ -60,7 +60,7 @@
       "video_id": "DokAM9ig7L0",
       "title": "What If Earth Stopped For One Second?",
       "published_at": "2026-09-08T07:45:00Z",
-      "views": 305,
+      "views": 308,
       "likes": 6,
       "comments": 2,
       "duration": "PT1M1S"
@@ -69,7 +69,7 @@
       "video_id": "OKz2LOxi0C0",
       "title": "What If All Lightning Struck At The Same Second?",
       "published_at": "2026-09-07T17:09:33Z",
-      "views": 303,
+      "views": 317,
       "likes": 3,
       "comments": 0,
       "duration": "PT1M1S"
@@ -78,7 +78,7 @@
       "video_id": "oMs1yyS8hn4",
       "title": "What If Oceans Froze From the Bottom Up?",
       "published_at": "2026-09-07T13:41:42Z",
-      "views": 192,
+      "views": 194,
       "likes": 1,
       "comments": 0,
       "duration": "PT1M1S"
@@ -87,8 +87,8 @@
       "video_id": "KOaRpTBNAJY",
       "title": "What If Earth Lost Its Atmosphere for 5 Seconds?",
       "published_at": "2026-09-07T12:08:01Z",
-      "views": 852,
-      "likes": 18,
+      "views": 862,
+      "likes": 19,
       "comments": 0,
       "duration": "PT1M1S"
     },
@@ -96,7 +96,7 @@
       "video_id": "qhCPG8tTES0",
       "title": "What If Sound Could Travel Through Space?",
       "published_at": "2026-09-07T04:47:00Z",
-      "views": 645,
+      "views": 661,
       "likes": 11,
       "comments": 0,
       "duration": "PT1M1S",
@@ -718,7 +718,7 @@
       "video_id": "ceUk5SLSLkg",
       "title": "What If a Coin-Sized Black Hole Appeared on Earth?",
       "published_at": "2026-09-05T08:36:46Z",
-      "views": 177,
+      "views": 178,
       "likes": 2,
       "comments": 0,
       "duration": "PT1M1S",
