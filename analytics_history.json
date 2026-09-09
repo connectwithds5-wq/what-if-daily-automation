@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-09-09T12:28:34.856997+00:00",
+  "updated_at": "2026-09-09T13:16:25.624422+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
     {
       "video_id": "-XeDltocXOU",
       "title": "What If Saturn Replaced Our Moon?",
       "published_at": "2026-09-09T03:37:15Z",
-      "views": 104,
+      "views": 106,
       "likes": 4,
       "comments": 2,
       "duration": "PT59S"
@@ -33,7 +33,7 @@
       "video_id": "7thBkWfXx20",
       "title": "What If Earth's Atmosphere Turned Neon Pink?",
       "published_at": "2026-09-08T12:46:20Z",
-      "views": 137,
+      "views": 136,
       "likes": 1,
       "comments": 0,
       "duration": "PT1M1S"
@@ -42,7 +42,7 @@
       "video_id": "as8bNSvrk78",
       "title": "What If All Clouds Turned to Solid Ice?",
       "published_at": "2026-09-08T10:13:47Z",
-      "views": 160,
+      "views": 162,
       "likes": 1,
       "comments": 0,
       "duration": "PT1M1S"
@@ -60,7 +60,7 @@
       "video_id": "DokAM9ig7L0",
       "title": "What If Earth Stopped For One Second?",
       "published_at": "2026-09-08T07:45:00Z",
-      "views": 308,
+      "views": 309,
       "likes": 6,
       "comments": 2,
       "duration": "PT1M1S"
@@ -87,7 +87,7 @@
       "video_id": "KOaRpTBNAJY",
       "title": "What If Earth Lost Its Atmosphere for 5 Seconds?",
       "published_at": "2026-09-07T12:08:01Z",
-      "views": 862,
+      "views": 866,
       "likes": 19,
       "comments": 0,
       "duration": "PT1M1S"
@@ -96,8 +96,8 @@
       "video_id": "qhCPG8tTES0",
       "title": "What If Sound Could Travel Through Space?",
       "published_at": "2026-09-07T04:47:00Z",
-      "views": 661,
-      "likes": 11,
+      "views": 664,
+      "likes": 12,
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
