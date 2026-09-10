@@ -1,7 +1,16 @@
 {
-  "updated_at": "2026-09-10T04:58:43.508249+00:00",
+  "updated_at": "2026-09-10T12:26:43.629407+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "efEZVMnqJWI",
+      "title": "What If Air Pressure Doubled For 3 Seconds?",
+      "published_at": "2026-09-10T05:02:47Z",
+      "views": 67,
+      "likes": 2,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "fjoQ62IqJM8",
       "title": "What If Jupiter Collided With Saturn?",
@@ -15,8 +24,8 @@
       "video_id": "-XeDltocXOU",
       "title": "What If Saturn Replaced Our Moon?",
       "published_at": "2026-09-09T03:37:15Z",
-      "views": 127,
-      "likes": 5,
+      "views": 129,
+      "likes": 6,
       "comments": 2,
       "duration": "PT59S"
     },
@@ -24,7 +33,7 @@
       "video_id": "rQ8N-hUB4SM",
       "title": "What If A Second Sun Entered Our Solar System?",
       "published_at": "2026-09-08T17:16:16Z",
-      "views": 189,
+      "views": 202,
       "likes": 2,
       "comments": 0,
       "duration": "PT59S"
@@ -33,7 +42,7 @@
       "video_id": "ELXgl8xz-wE",
       "title": "What If You Could See Every Wi-Fi Signal?",
       "published_at": "2026-09-08T14:12:39Z",
-      "views": 27,
+      "views": 30,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -42,7 +51,7 @@
       "video_id": "7thBkWfXx20",
       "title": "What If Earth's Atmosphere Turned Neon Pink?",
       "published_at": "2026-09-08T12:46:20Z",
-      "views": 151,
+      "views": 156,
       "likes": 1,
       "comments": 0,
       "duration": "PT1M1S"
@@ -51,16 +60,16 @@
       "video_id": "as8bNSvrk78",
       "title": "What If All Clouds Turned to Solid Ice?",
       "published_at": "2026-09-08T10:13:47Z",
-      "views": 178,
+      "views": 184,
       "likes": 2,
-      "comments": 1,
+      "comments": 2,
       "duration": "PT1M1S"
     },
     {
       "video_id": "p2vbKrqcVvo",
       "title": "What If All Sand Turned to Glass?",
       "published_at": "2026-09-08T09:04:14Z",
-      "views": 23,
+      "views": 24,
       "likes": 0,
       "comments": 1,
       "duration": "PT1M1S"
@@ -69,7 +78,7 @@
       "video_id": "DokAM9ig7L0",
       "title": "What If Earth Stopped For One Second?",
       "published_at": "2026-09-08T07:45:00Z",
-      "views": 318,
+      "views": 325,
       "likes": 6,
       "comments": 2,
       "duration": "PT1M1S"
@@ -272,7 +281,7 @@
       "video_id": "KOaRpTBNAJY",
       "title": "What If Earth Lost Its Atmosphere for 5 Seconds?",
       "published_at": "2026-09-07T12:08:01Z",
-      "views": 872,
+      "views": 878,
       "likes": 19,
       "comments": 0,
       "duration": "PT1M1S",
@@ -369,7 +378,7 @@
       "video_id": "qhCPG8tTES0",
       "title": "What If Sound Could Travel Through Space?",
       "published_at": "2026-09-07T04:47:00Z",
-      "views": 673,
+      "views": 679,
       "likes": 12,
       "comments": 0,
       "duration": "PT1M1S",
@@ -1082,84 +1091,7 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.0789,
-          "relative_retention": 0.3764
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.0658,
-          "relative_retention": 0.3166
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.0526,
-          "relative_retention": 0.2638
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.0526,
-          "relative_retention": 0.2292
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.0526,
-          "relative_retention": 0.2114
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.0395,
-          "relative_retention": 0.2034
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.0395,
-          "relative_retention": 0.1996
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.0132,
-          "relative_retention": 0.1972
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 0.9079,
-          "relative_retention": 0.1948
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.8947,
-          "relative_retention": 0.1915
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.4605,
-          "relative_retention": 0.1981
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.4605,
-          "relative_retention": 0.2027
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.4474,
-          "relative_retention": 0.2077
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.4342,
-          "relative_retention": 0.213
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.2105,
-          "relative_retention": 0.27
-        }
-      ]
+      }
     },
     {
       "video_id": "KxodhyyUpIM",
