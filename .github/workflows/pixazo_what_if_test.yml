@@ -1,0 +1,48 @@
+name: PIXAZO WHAT IF TEST
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/pixazo-video-local
+
+permissions:
+  contents: read
+
+jobs:
+  pixazo-test:
+    runs-on: ubuntu-latest
+    env:
+      PIXAZO_API_KEY: ${{ secrets.PIXAZO_API_KEY }}
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Validate Pixazo secret
+        run: |
+          if [ -z "$PIXAZO_API_KEY" ]; then
+            echo "PIXAZO_API_KEY secret is missing"
+            exit 1
+          fi
+          echo "PIXAZO_API_KEY is configured"
+
+      - name: Generate What-If test video
+        run: python src/pixazo_video_test.py
+
+      - name: Upload generated video
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixazo-what-if-test
+          path: output/pixazo_test/pixazo_ltx_what_if_test.mp4
+          if-no-files-found: error
