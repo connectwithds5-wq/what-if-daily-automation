@@ -1,6 +1,5 @@
 import os
 import time
-import subprocess
 from pathlib import Path
 
 import requests
@@ -9,34 +8,33 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "output" / "pixazo_test"
 OUT.mkdir(parents=True, exist_ok=True)
 
-# EXACT Pixazo model/API used by toon_kids_automation:
-# https://github.com/connectwithds5-wq/toon_kids_automation/blob/main/src/pixazo_ltx_10sec_story_av.py
+# Exact Pixazo LTX endpoint/parameter style used by toon_kids_automation.
 PIXAZO_KEY = os.getenv("PIXAZO_API_KEY", "").strip()
 API_BASE = "https://gateway.pixazo.ai"
 
 if not PIXAZO_KEY:
     raise RuntimeError("PIXAZO_API_KEY is missing")
 
-# One What-If test clip. Same LTX endpoint and parameter style as Toon Kids.
 PROMPT = """
-Premium cinematic scientific visualization for a YouTube Short.
-Vertical 9:16. Photorealistic Earth seen from a high aerial / near-space camera.
-The camera starts with a dramatic wide aerial view and slowly pushes toward the planet.
-White clouds move naturally over blue oceans and continents, with warm sunlight breaking through.
-Smooth controlled drone-like camera movement, realistic atmospheric depth, cinematic lighting,
-high detail, physically believable motion, strong visual impact, polished professional video.
+Premium cinematic scientific visualization for a YouTube What-If Short: What If Earth Suddenly Stopped Spinning?
+Vertical 9:16, photorealistic CGI, realistic Earth viewed from near-space.
+The camera starts in a dramatic high-altitude orbital drone-like wide shot and makes a slow, smooth,
+controlled cinematic push toward Earth. Earth is visibly rotating, then the rotation smoothly decelerates
+and stops, creating a clear visual cause-and-effect moment. Realistic white cloud systems drift over blue oceans
+and detailed continents. Natural atmospheric haze, warm sunlight, subtle rim lighting, realistic shadows,
+deep cinematic contrast, polished premium science-documentary look. Stable camera motion, strong depth,
+clean composition, highly detailed planet surface, professional YouTube Shorts visual quality.
 No text, no letters, no numbers, no subtitles, no logos, no watermark.
 """.strip()
 
 NEGATIVE = (
     "boring static shot, frantic motion, rapid cuts, time lapse, speed ramp, camera shake, extreme zoom, "
-    "fisheye, blurry, low quality, distorted objects, flicker, jitter, unstable colors, text, letters, "
-    "numbers, subtitles, logo, watermark"
+    "fisheye, blurry, low quality, distorted Earth, warped continents, duplicated clouds, melting planet, "
+    "flicker, jitter, unstable colors, cartoon, anime, text, letters, numbers, subtitles, logo, watermark, UI, border"
 )
 
 
 def submit(prompt):
-    # Exact endpoint/headers/parameter names from Toon Kids Pixazo LTX implementation.
     url = f"{API_BASE}/ltx-video/v1/text-to-video"
     headers = {
         "Content-Type": "application/json",
@@ -51,7 +49,7 @@ def submit(prompt):
         "steps": 8,
         "cfg": 3.0,
     }
-    print("🎬 Pixazo LTX test: submitting...")
+    print("🎬 Pixazo LTX What-If test: submitting...")
     r = requests.post(url, headers=headers, json=payload, timeout=90)
     if r.status_code >= 400:
         raise RuntimeError(f"Pixazo HTTP {r.status_code}: {r.text[:2000]}")
