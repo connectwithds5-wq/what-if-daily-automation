@@ -6,7 +6,6 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
-
 import what_if_daily_v2 as wf
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -16,6 +15,8 @@ CLIPS = OUT / "clips"
 OUT.mkdir(parents=True, exist_ok=True)
 AUDIO.mkdir(parents=True, exist_ok=True)
 CLIPS.mkdir(parents=True, exist_ok=True)
+
+# Redirect ONLY this test's audio output. Production output/audio is untouched.
 wf.AUDIO = AUDIO
 
 PIXAZO_KEY = os.getenv("PIXAZO_API_KEY", "").strip()
@@ -54,11 +55,13 @@ def pixazo(prompt, index):
     r.raise_for_status()
     data = r.json()
     request_id = data.get("request_id")
-    status_url = data.get("polling_url") or f"{API_BASE}/v2/requests/status/{request_id}"
     if not request_id:
         raise RuntimeError(f"No request_id from Pixazo: {data}")
+    status_url = data.get("polling_url") or f"{API_BASE}/v2/requests/status/{request_id}"
     for n in range(500):
-        time.sleep(POLL_SECONDS)
+        # Check immediately on first pass; then every 3 seconds.
+        if n:
+            time.sleep(POLL_SECONDS)
         s = requests.get(status_url, headers={"Ocp-Apim-Subscription-Key": PIXAZO_KEY}, timeout=60)
         s.raise_for_status()
         status = s.json()
@@ -82,7 +85,7 @@ def pixazo(prompt, index):
             return index, raw
         if state in {"FAILED", "ERROR", "CANCELLED", "CANCELED"}:
             raise RuntimeError(f"Pixazo scene {index + 1} failed: {status}")
-    raise TimeoutError(f"Pixazo scene {index + 1} exceeded timeout")
+    raise TimeoutError(f"Pixazo scene {index + 1} exceeded 25 minutes")
 
 
 def normalize_and_caption(raw, scene, index):
@@ -93,61 +96,78 @@ def normalize_and_caption(raw, scene, index):
         "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
         f"text='{text}':fontcolor=white:fontsize=68:borderw=5:bordercolor=black@0.8:x=(w-text_w)/2:y=h*0.72"
     )
-    run(["ffmpeg", "-y", "-i", str(raw), "-vf", vf, "-t", str(SCENE_SECONDS), "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out)])
+    run(["ffmpeg", "-y", "-threads", "2", "-i", str(raw), "-vf", vf, "-t", str(SCENE_SECONDS), "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", str(out)])
     return out
 
 
+def build_scene_audio(i, scene):
+    voice = wf.create_scene_voice(scene["narration"], i)
+    sfx = wf.create_scene_sfx(scene.get("sfx_type", "none"), i)
+    mixed = AUDIO / f"scene_{i + 1:02d}.m4a"
+    run(["ffmpeg", "-y", "-threads", "2", "-i", str(voice), "-i", str(sfx), "-filter_complex", "[0:a]volume=1.0[v];[1:a]volume=0.32[s];[v][s]amix=inputs=2:duration=longest:dropout_transition=0.1,alimiter=limit=0.90[a]", "-map", "[a]", "-t", str(SCENE_SECONDS), "-c:a", "aac", "-b:a", "160k", str(mixed)])
+    return i, mixed
+
+
 def build_audio():
-    scene_audio = []
-    for i, scene in enumerate(STORY["scenes"]):
-        voice = wf.create_scene_voice(scene["narration"], i)
-        sfx = wf.create_scene_sfx(scene.get("sfx_type", "none"), i)
-        mixed = AUDIO / f"scene_{i + 1:02d}.m4a"
-        run(["ffmpeg", "-y", "-i", str(voice), "-i", str(sfx), "-filter_complex", "[0:a]volume=1.0[v];[1:a]volume=0.32[s];[v][s]amix=inputs=2:duration=longest:dropout_transition=0.1,alimiter=limit=0.90[a]", "-map", "[a]", "-t", str(SCENE_SECONDS), "-c:a", "aac", "-b:a", "160k", str(mixed)])
-        scene_audio.append(mixed)
+    # Keep the exact production voice/SFX/music functions, but run independent scenes concurrently.
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        futures = [pool.submit(build_scene_audio, i, scene) for i, scene in enumerate(STORY["scenes"])]
+        results = [None] * len(STORY["scenes"])
+        for f in as_completed(futures):
+            i, path = f.result()
+            results[i] = path
+
     music = wf.create_music()
     concat = AUDIO / "scene_audio_concat.txt"
-    concat.write_text("\n".join(f"file '{p.as_posix()}'" for p in scene_audio), encoding="utf-8")
+    concat.write_text("\n".join(f"file '{p.as_posix()}'" for p in results), encoding="utf-8")
     speech_sfx = AUDIO / "speech_sfx.m4a"
     run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(speech_sfx)])
     final_audio = AUDIO / "final_audio.m4a"
-    run(["ffmpeg", "-y", "-i", str(speech_sfx), "-i", str(music), "-filter_complex", "[0:a]volume=1.0[a0];[1:a]volume=0.18[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=0.2,alimiter=limit=0.90[a]", "-map", "[a]", "-t", "20", "-c:a", "aac", "-b:a", "160k", str(final_audio)])
+    run(["ffmpeg", "-y", "-threads", "2", "-i", str(speech_sfx), "-i", str(music), "-filter_complex", "[0:a]volume=1.0[a0];[1:a]volume=0.18[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=0.2,alimiter=limit=0.90[a]", "-map", "[a]", "-t", "20", "-c:a", "aac", "-b:a", "160k", str(final_audio)])
     return final_audio
 
 
 def concat_video(clips, audio):
     concat = OUT / "video_concat.txt"
     concat.write_text("\n".join(f"file '{p.as_posix()}'" for p in clips), encoding="utf-8")
-    silent = OUT / "video_silent.mp4"
     final = OUT / "pixazo_what_if_full_test.mp4"
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(silent)])
-    run(["ffmpeg", "-y", "-i", str(silent), "-i", str(audio), "-map", "0:v:0", "-map", "1:a:0", "-t", "20", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(final)])
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-i", str(audio), "-map", "0:v:0", "-map", "1:a:0", "-t", "20", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(final)])
     return final
 
 
 def main():
     if not PIXAZO_KEY:
         raise RuntimeError("PIXAZO_API_KEY is missing")
-    print("=== FAST PIXAZO WHAT-IF TEST ===")
-    print(STORY["title"])
 
-    # Start all four Pixazo jobs together. In parallel, build voice/music/SFX.
-    audio_future = None
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+    print("=== OPTIMIZED PIXAZO WHAT-IF TEST ===")
+    print(STORY["title"])
+    started = time.time()
+
+    # Pixazo generation and all audio generation overlap.
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS + 1) as pool:
         pixazo_futures = [pool.submit(pixazo, scene["visual_prompt"], i) for i, scene in enumerate(STORY["scenes"])]
         audio_future = pool.submit(build_audio)
         results = [None] * len(STORY["scenes"])
-        for future in as_completed(pixazo_futures):
-            index, raw = future.result()
-            results[index] = raw
-            print(f"✅ Pixazo scene {index + 1}/4 ready")
+        for f in as_completed(pixazo_futures):
+            i, raw = f.result()
+            results[i] = raw
+            print(f"✅ Pixazo scene {i + 1}/4 ready")
         audio = audio_future.result()
 
-    final_clips = [normalize_and_caption(results[i], STORY["scenes"][i], i) for i in range(len(results))]
+    # Four independent FFmpeg encodes also run concurrently.
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        futures = [pool.submit(normalize_and_caption, results[i], STORY["scenes"][i], i) for i in range(4)]
+        final_clips = [None] * 4
+        for f in as_completed(futures):
+            clip = f.result()
+            idx = int(clip.stem.split("_")[-1]) - 1
+            final_clips[idx] = clip
+
     final = concat_video(final_clips, audio)
     (OUT / "story.json").write_text(json.dumps(STORY, indent=2), encoding="utf-8")
     print(f"FINAL_VIDEO={final}")
     print(f"SIZE_MB={final.stat().st_size / (1024 * 1024):.2f}")
+    print(f"TOTAL_SECONDS={time.time() - started:.1f}")
 
 
 if __name__ == "__main__":
