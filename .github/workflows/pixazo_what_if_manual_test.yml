@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PIXAZO_API_KEY: ${{ secrets.PIXAZO_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout isolated Pixazo test branch
@@ -23,26 +24,37 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install requests
+      - name: Install What-If dependencies
+        run: pip install -r requirements.txt
 
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Validate Pixazo secret
+      - name: Validate secrets
         run: |
           if [ -z "$PIXAZO_API_KEY" ]; then
             echo "PIXAZO_API_KEY secret is missing"
             exit 1
           fi
-          echo "PIXAZO_API_KEY is configured"
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY secret is missing"
+            exit 1
+          fi
+          echo "Required secrets are configured"
 
-      - name: Generate isolated What-If video
-        run: python src/pixazo_video_test.py
+      - name: Generate full Pixazo What-If video
+        run: python src/pixazo_full_test.py
 
-      - name: Upload Pixazo test video
+      - name: Upload full Pixazo test video
         uses: actions/upload-artifact@v4
         with:
-          name: pixazo-what-if-test
-          path: output/pixazo_test/pixazo_ltx_what_if_test.mp4
+          name: pixazo-what-if-full-test
+          path: output/pixazo_full_test/pixazo_what_if_full_test.mp4
           if-no-files-found: error
+
+      - name: Upload test story and intermediate files
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixazo-what-if-full-test-debug
+          path: output/pixazo_full_test/
+          if-no-files-found: warn
