@@ -1,13 +1,22 @@
 {
-  "updated_at": "2026-09-11T04:55:13.655344+00:00",
+  "updated_at": "2026-09-11T12:26:13.270020+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "i5m6EkrwQJM",
+      "title": "What If Earth Passed Through Saturn's Rings?",
+      "published_at": "2026-09-11T04:58:03Z",
+      "views": 99,
+      "likes": 3,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "h-xqMVP_Bds",
       "title": "What If Earth's Core Stopped for 10 Seconds?",
       "published_at": "2026-09-10T12:29:36Z",
-      "views": 183,
-      "likes": 0,
+      "views": 186,
+      "likes": 1,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -15,8 +24,8 @@
       "video_id": "efEZVMnqJWI",
       "title": "What If Air Pressure Doubled For 3 Seconds?",
       "published_at": "2026-09-10T05:02:47Z",
-      "views": 95,
-      "likes": 3,
+      "views": 101,
+      "likes": 2,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -33,7 +42,7 @@
       "video_id": "-XeDltocXOU",
       "title": "What If Saturn Replaced Our Moon?",
       "published_at": "2026-09-09T03:37:15Z",
-      "views": 147,
+      "views": 149,
       "likes": 7,
       "comments": 2,
       "duration": "PT59S",
@@ -384,7 +393,7 @@
       "video_id": "DokAM9ig7L0",
       "title": "What If Earth Stopped For One Second?",
       "published_at": "2026-09-08T07:45:00Z",
-      "views": 325,
+      "views": 326,
       "likes": 6,
       "comments": 2,
       "duration": "PT1M1S",
@@ -772,7 +781,7 @@
       "video_id": "qhCPG8tTES0",
       "title": "What If Sound Could Travel Through Space?",
       "published_at": "2026-09-07T04:47:00Z",
-      "views": 701,
+      "views": 707,
       "likes": 12,
       "comments": 0,
       "duration": "PT1M1S",
@@ -1291,84 +1300,7 @@
         "shares": 0,
         "subscribersGained": 1,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.0711,
-          "relative_retention": 0.3834
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.0711,
-          "relative_retention": 0.3276
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.066,
-          "relative_retention": 0.2798
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.066,
-          "relative_retention": 0.2504
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.066,
-          "relative_retention": 0.2374
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.066,
-          "relative_retention": 0.2337
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.066,
-          "relative_retention": 0.2345
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.0355,
-          "relative_retention": 0.2378
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 0.9949,
-          "relative_retention": 0.2426
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.9086,
-          "relative_retention": 0.2485
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.4975,
-          "relative_retention": 0.3434
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.4822,
-          "relative_retention": 0.3515
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.4619,
-          "relative_retention": 0.3599
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.4416,
-          "relative_retention": 0.3685
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.2284,
-          "relative_retention": 0.4909
-        }
-      ]
+      }
     },
     {
       "video_id": "2keztiuOLlQ",
