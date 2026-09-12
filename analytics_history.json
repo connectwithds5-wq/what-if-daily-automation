@@ -1,7 +1,16 @@
 {
-  "updated_at": "2026-09-12T12:23:13.993940+00:00",
+  "updated_at": "2026-09-12T14:36:59.730869+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "1uKmtp5MiBk",
+      "title": "What If All Ocean Water Vanished for 5 Seconds?",
+      "published_at": "2026-09-12T12:26:11Z",
+      "views": 38,
+      "likes": 0,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "7bY4ST95dpY",
       "title": "What If Earth Spun in Reverse for 5 Seconds?",
@@ -15,7 +24,7 @@
       "video_id": "f1Ua7aQ5Hcw",
       "title": "What If Earth's Gravity Tripled For 5 Seconds?",
       "published_at": "2026-09-11T12:30:01Z",
-      "views": 121,
+      "views": 126,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -1066,84 +1075,7 @@
         "shares": 0,
         "subscribersGained": 1,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.1296,
-          "relative_retention": 0.4949
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.1204,
-          "relative_retention": 0.438
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.1157,
-          "relative_retention": 0.3881
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.1157,
-          "relative_retention": 0.3554
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.1065,
-          "relative_retention": 0.338
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.1019,
-          "relative_retention": 0.3289
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.1019,
-          "relative_retention": 0.3236
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.0417,
-          "relative_retention": 0.3201
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 0.9444,
-          "relative_retention": 0.3176
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.8565,
-          "relative_retention": 0.3158
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.5046,
-          "relative_retention": 0.3147
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.4815,
-          "relative_retention": 0.3126
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.4722,
-          "relative_retention": 0.3101
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.4537,
-          "relative_retention": 0.307
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.2778,
-          "relative_retention": 0.3447
-        }
-      ]
+      }
     },
     {
       "video_id": "OXF1sFqhwUs",
@@ -1357,84 +1289,7 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.0588,
-          "relative_retention": 0.3226
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.0588,
-          "relative_retention": 0.2598
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.0196,
-          "relative_retention": 0.204
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.0196,
-          "relative_retention": 0.1675
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.0196,
-          "relative_retention": 0.1488
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.0196,
-          "relative_retention": 0.1406
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.0196,
-          "relative_retention": 0.1374
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 0.9804,
-          "relative_retention": 0.1369
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 0.8627,
-          "relative_retention": 0.1378
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.8039,
-          "relative_retention": 0.1396
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.2941,
-          "relative_retention": 0.1923
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.2941,
-          "relative_retention": 0.1913
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.2549,
-          "relative_retention": 0.1863
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.2549,
-          "relative_retention": 0.1774
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.1373,
-          "relative_retention": 0.0685
-        }
-      ]
+      }
     },
     {
       "video_id": "thQVx7L6IaI",
@@ -1580,7 +1435,7 @@
       "video_id": "ass1B5DEkKI",
       "title": "What If Earth Had Rings Like Saturn?",
       "published_at": "2026-09-05T04:55:51Z",
-      "views": 543,
+      "views": 544,
       "likes": 10,
       "comments": 0,
       "duration": "PT1M1S",
