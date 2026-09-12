@@ -8,9 +8,7 @@ on:
         required: true
         default: "0"
         type: choice
-        options:
-          - "0"
-          - "1"
+        options: ["0", "1"]
   schedule:
     - cron: "50 4 * * *"
     - cron: "10 12 * * *"
@@ -33,6 +31,11 @@ jobs:
       GEMINI_IMAGE_FALLBACK_MODEL: gemini-3-pro-image
       GEMINI_IMAGE_FALLBACK_2_MODEL: gemini-2.5-flash-image
       VISUALS_ENABLED: "true"
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_WAN_SPACE: zerogpu-aoti/wan2-2-fp8da-aoti
+      WAN_STEPS: "4"
+      WAN_GUIDANCE: "1.0"
+      WAN_GUIDANCE_2: "3.0"
       YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID || secrets.YOUTUBE_CHANNEL_ID }}
@@ -47,7 +50,6 @@ jobs:
 
       - name: Configure Git authentication
         run: |
-          set -euo pipefail
           test -n "$WORKFLOW_PAT" || { echo "WORKFLOW_PAT is missing"; exit 1; }
           git config --local --unset-all credential.helper || true
           cat > "$RUNNER_TEMP/git-askpass.sh" <<'EOF'
@@ -63,7 +65,6 @@ jobs:
           echo "GIT_TERMINAL_PROMPT=0" >> "$GITHUB_ENV"
           git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
           git ls-remote origin HEAD >/dev/null
-          echo "Git PAT authentication preflight PASSED."
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -73,14 +74,14 @@ jobs:
 
       - name: Install FFmpeg
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
 
       - name: Install Python packages
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install google-genai requests
+          python -m pip install google-genai requests gradio-client
 
       - name: Validate secrets
         run: |
@@ -88,28 +89,20 @@ jobs:
           test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
           test -n "$YOUTUBE_API_KEY" || { echo "YOUTUBE_API_KEY is missing"; exit 1; }
           test -n "$YOUTUBE_CHANNEL_ID" || { echo "YOUTUBE_CHANNEL_ID is missing"; exit 1; }
-          echo "Required Gemini and YouTube credentials are present."
 
       - name: Refresh AI strategy from YouTube Analytics
         run: |
           python src/analytics_strategy.py
           if [ -f growth_strategy.json ]; then
-            echo "Strategy file available for this posting run."
             git diff --check
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add growth_strategy.json
-            if [ -f analytics_history.json ]; then
-              git add analytics_history.json
-            fi
-            if git diff --cached --quiet; then
-              echo "Analytics strategy unchanged."
-            else
+            if [ -f analytics_history.json ]; then git add analytics_history.json; fi
+            if ! git diff --cached --quiet; then
               git commit -m "Refresh WHAT IF analytics strategy"
               git push origin "HEAD:${GITHUB_REF_NAME}"
             fi
-          else
-            echo "No refreshed strategy file; existing strategy will be used."
           fi
 
       - name: Apply AI-selected posting times
@@ -121,8 +114,6 @@ jobs:
             git add .github/workflows/what_if_daily.yml
             git commit -m "Update WHAT IF posting schedule from analytics"
             git push origin "HEAD:${GITHUB_REF_NAME}"
-          else
-            echo "Posting schedule already matches current AI strategy."
           fi
 
       - name: Resolve upload slot
@@ -138,23 +129,19 @@ jobs:
             if [ "$EVENT_SCHEDULE" = "$FIRST_CRON" ]; then SLOT="0"; elif [ "$EVENT_SCHEDULE" = "$SECOND_CRON" ]; then SLOT="1"; else SLOT="0"; fi
           fi
           echo "RUN_SLOT=$SLOT" >> "$GITHUB_ENV"
-          echo "Resolved WHAT IF upload slot: $SLOT"
 
       - name: Normalize production source
         run: |
           python scripts/normalize_production.py
           python scripts/smooth_scene_transitions.py
+          python scripts/enable_wan22_primary.py
           git diff --check
-          python -m py_compile src/what_if_daily_v2.py
-          python -m py_compile scripts/normalize_production.py
-          python -m py_compile scripts/smooth_scene_transitions.py
+          python -m py_compile src/what_if_daily_v2.py scripts/enable_wan22_primary.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/what_if_daily_v2.py
-          if git diff --cached --quiet; then
-            echo "Production source already normalized."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Normalize analytics-driven production pipeline"
+          if ! git diff --cached --quiet; then
+            git commit -m "Make Wan 2.2 primary video engine"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
@@ -168,27 +155,18 @@ jobs:
         run: |
           python - <<'PY'
           import yaml
-          with open(".github/workflows/what_if_daily.yml", encoding="utf-8") as f:
-              yaml.safe_load(f)
-          print("Workflow YAML parse OK.")
+          with open('.github/workflows/what_if_daily.yml', encoding='utf-8') as f: yaml.safe_load(f)
+          print('Workflow YAML parse OK.')
           PY
           python -m py_compile src/what_if_daily_v2.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/smooth_scene_transitions.py
+          python -m py_compile scripts/enable_wan22_primary.py
           python -m py_compile scripts/enforce_story_word_limit.py
-          python -m py_compile src/analytics_strategy.py
-          python -m py_compile src/update_posting_schedule.py
-          echo "Python syntax checks PASSED."
 
       - name: Audio filter smoke test
         run: |
-          set -euo pipefail
-          ffmpeg -hide_banner -loglevel error \
-            -f lavfi -i "sine=frequency=440:duration=3" \
-            -f lavfi -i "sine=frequency=120:duration=3" \
-            -filter_complex "[0:a]volume=1.0,asplit=2[n][sc];[1:a]volume=0.68[m];[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,loudnorm=I=-15.5:TP=-1.2:LRA=8[a]" \
-            -map "[a]" -t 3 -f null -
-          echo "FFmpeg audio sidechain smoke test PASSED."
+          ffmpeg -hide_banner -loglevel error -f lavfi -i "sine=frequency=440:duration=3" -f lavfi -i "sine=frequency=120:duration=3" -filter_complex "[0:a]volume=1.0,asplit=2[n][sc];[1:a]volume=0.68[m];[m][sc]sidechaincompress=threshold=0.04:ratio=5:attack=18:release=260:makeup=1:mix=0.82[duck];[n][duck]amix=inputs=2:duration=first:dropout_transition=0.8,loudnorm=I=-15.5:TP=-1.2:LRA=8[a]" -map "[a]" -t 3 -f null -
 
       - name: Generate WHAT IF DAILY V2 video
         run: python src/what_if_daily_v2.py
@@ -196,18 +174,14 @@ jobs:
       - name: Save topic history
         if: success()
         run: |
-          if [ ! -f topic_history.json ]; then
-            echo "No topic history file created; nothing to save."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add topic_history.json
-          if git diff --cached --quiet; then
-            echo "No topic history changes to commit."
-          else
-            git commit -m "Reserve WHAT IF DAILY topic"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+          if [ -f topic_history.json ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add topic_history.json
+            if ! git diff --cached --quiet; then
+              git commit -m "Reserve WHAT IF DAILY topic"
+              git push origin "HEAD:${GITHUB_REF_NAME}"
+            fi
           fi
 
       - name: Cleanup generated files
