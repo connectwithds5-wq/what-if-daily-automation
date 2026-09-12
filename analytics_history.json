@@ -1,12 +1,21 @@
 {
-  "updated_at": "2026-09-12T04:54:46.552169+00:00",
+  "updated_at": "2026-09-12T12:23:13.993940+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "7bY4ST95dpY",
+      "title": "What If Earth Spun in Reverse for 5 Seconds?",
+      "published_at": "2026-09-12T04:58:25Z",
+      "views": 103,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "f1Ua7aQ5Hcw",
       "title": "What If Earth's Gravity Tripled For 5 Seconds?",
       "published_at": "2026-09-11T12:30:01Z",
-      "views": 112,
+      "views": 121,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -15,8 +24,8 @@
       "video_id": "i5m6EkrwQJM",
       "title": "What If Earth Passed Through Saturn's Rings?",
       "published_at": "2026-09-11T04:58:03Z",
-      "views": 140,
-      "likes": 3,
+      "views": 151,
+      "likes": 4,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -24,7 +33,7 @@
       "video_id": "h-xqMVP_Bds",
       "title": "What If Earth's Core Stopped for 10 Seconds?",
       "published_at": "2026-09-10T12:29:36Z",
-      "views": 190,
+      "views": 197,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -33,7 +42,7 @@
       "video_id": "efEZVMnqJWI",
       "title": "What If Air Pressure Doubled For 3 Seconds?",
       "published_at": "2026-09-10T05:02:47Z",
-      "views": 105,
+      "views": 106,
       "likes": 2,
       "comments": 0,
       "duration": "PT59S",
