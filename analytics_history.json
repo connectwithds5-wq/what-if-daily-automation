@@ -1,12 +1,21 @@
 {
-  "updated_at": "2026-09-13T05:11:44.324628+00:00",
+  "updated_at": "2026-09-13T12:24:44.218003+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "KG9nIl8jyt4",
+      "title": "What If Earth's Gravity Reversed For 5 Seconds?",
+      "published_at": "2026-09-13T05:14:31Z",
+      "views": 99,
+      "likes": 1,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "bcrH1t8cRtg",
       "title": "What If Solar Wind Hit Earth at Light Speed?",
       "published_at": "2026-09-13T04:57:01Z",
-      "views": 7,
+      "views": 60,
       "likes": 0,
       "comments": 0,
       "duration": "PT59S"
@@ -15,7 +24,7 @@
       "video_id": "TsXuoglBEgU",
       "title": "What If Earth's Atmosphere Turned to Liquid?",
       "published_at": "2026-09-12T14:39:52Z",
-      "views": 45,
+      "views": 54,
       "likes": 3,
       "comments": 0,
       "duration": "PT59S"
@@ -24,7 +33,7 @@
       "video_id": "1uKmtp5MiBk",
       "title": "What If All Ocean Water Vanished for 5 Seconds?",
       "published_at": "2026-09-12T12:26:11Z",
-      "views": 197,
+      "views": 207,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -33,7 +42,7 @@
       "video_id": "7bY4ST95dpY",
       "title": "What If Earth Spun in Reverse for 5 Seconds?",
       "published_at": "2026-09-12T04:58:25Z",
-      "views": 128,
+      "views": 138,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -42,7 +51,7 @@
       "video_id": "f1Ua7aQ5Hcw",
       "title": "What If Earth's Gravity Tripled For 5 Seconds?",
       "published_at": "2026-09-11T12:30:01Z",
-      "views": 133,
+      "views": 139,
       "likes": 1,
       "comments": 0,
       "duration": "PT59S"
@@ -265,7 +274,7 @@
       "video_id": "fjoQ62IqJM8",
       "title": "What If Jupiter Collided With Saturn?",
       "published_at": "2026-09-09T13:30:44Z",
-      "views": 181,
+      "views": 170,
       "likes": 0,
       "comments": 0,
       "duration": "PT59S",
@@ -459,7 +468,7 @@
       "video_id": "rQ8N-hUB4SM",
       "title": "What If A Second Sun Entered Our Solar System?",
       "published_at": "2026-09-08T17:16:16Z",
-      "views": 216,
+      "views": 214,
       "likes": 2,
       "comments": 0,
       "duration": "PT59S",
@@ -556,7 +565,7 @@
       "video_id": "ELXgl8xz-wE",
       "title": "What If You Could See Every Wi-Fi Signal?",
       "published_at": "2026-09-08T14:12:39Z",
-      "views": 43,
+      "views": 41,
       "likes": 2,
       "comments": 0,
       "duration": "PT59S",
@@ -1269,84 +1278,7 @@
         "shares": 0,
         "subscribersGained": 1,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.1273,
-          "relative_retention": 0.491
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.1182,
-          "relative_retention": 0.434
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.1136,
-          "relative_retention": 0.3837
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.1136,
-          "relative_retention": 0.3509
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.1045,
-          "relative_retention": 0.3335
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.1,
-          "relative_retention": 0.3245
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.1,
-          "relative_retention": 0.3193
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.0409,
-          "relative_retention": 0.3159
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 0.9409,
-          "relative_retention": 0.3136
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.8545,
-          "relative_retention": 0.3121
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.5,
-          "relative_retention": 0.3123
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.4773,
-          "relative_retention": 0.3103
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.4682,
-          "relative_retention": 0.3078
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.45,
-          "relative_retention": 0.3046
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.2773,
-          "relative_retention": 0.3417
-        }
-      ]
+      }
     },
     {
       "video_id": "OXF1sFqhwUs",
@@ -1497,7 +1429,7 @@
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 180,
+        "views": 178,
         "estimatedMinutesWatched": 27,
         "averageViewDuration": 19,
         "averageViewPercentage": 31.920000000000005,
@@ -1537,8 +1469,8 @@
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 1059,
-        "estimatedMinutesWatched": 268,
+        "views": 1041,
+        "estimatedMinutesWatched": 266,
         "averageViewDuration": 30,
         "averageViewPercentage": 50.79,
         "likes": 17,
@@ -1557,14 +1489,14 @@
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 554,
+        "views": 543,
         "estimatedMinutesWatched": 91,
         "averageViewDuration": 23,
         "averageViewPercentage": 38.85,
         "likes": 10,
         "comments": 0,
         "shares": 0,
-        "subscribersGained": 1,
+        "subscribersGained": 0,
         "subscribersLost": 0
       }
     },
@@ -1577,7 +1509,7 @@
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 366,
+        "views": 365,
         "estimatedMinutesWatched": 24,
         "averageViewDuration": 13,
         "averageViewPercentage": 22.91,
@@ -1617,7 +1549,7 @@
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 346,
+        "views": 342,
         "estimatedMinutesWatched": 52,
         "averageViewDuration": 19,
         "averageViewPercentage": 31.25,
