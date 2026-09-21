@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-09-21T12:25:24.155716+00:00",
+  "updated_at": "2026-09-21T18:45:57.895233+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
     {
       "video_id": "MAt8dXiQVX4",
       "title": "What If Saturn Swapped Orbits with Mars?",
       "published_at": "2026-09-21T07:58:35Z",
-      "views": 109,
+      "views": 169,
       "likes": 7,
       "comments": 0,
       "duration": "PT59S"
@@ -1829,7 +1829,7 @@
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 702,
+        "views": 701,
         "estimatedMinutesWatched": 116,
         "averageViewDuration": 23,
         "averageViewPercentage": 38.2,
