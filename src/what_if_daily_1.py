@@ -1297,127 +1297,55 @@ def save_metadata(
 
 
 def upload_youtube(metadata):
+    client_id = os.getenv("YOUTUBE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "").strip()
+    refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "").strip()
 
-    raw = os.getenv(
-        "YOUTUBE_OAUTH_JSON"
-    )
-
-    if not raw:
-
-        print(
-            "YOUTUBE_OAUTH_JSON missing; "
-            "skipping upload"
-        )
-
-        return
-
-    data = json.loads(
-        raw
-    )
+    missing = [
+        name for name, value in {
+            "YOUTUBE_CLIENT_ID": client_id,
+            "YOUTUBE_CLIENT_SECRET": client_secret,
+            "YOUTUBE_REFRESH_TOKEN": refresh_token,
+        }.items() if not value
+    ]
+    if missing:
+        raise RuntimeError("Missing YouTube OAuth GitHub Secrets: " + ", ".join(missing))
 
     creds = Credentials(
-        None,
-        refresh_token=data[
-            "refresh_token"
-        ],
-        token_uri=
-            "https://oauth2.googleapis.com/token",
-        client_id=data[
-            "client_id"
-        ],
-        client_secret=data[
-            "client_secret"
-        ],
-        scopes=[
-            "https://www.googleapis.com/auth/"
-            "youtube.upload"
-        ]
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=["https://www.googleapis.com/auth/youtube.upload"],
     )
+    youtube = build("youtube", "v3", credentials=creds)
 
-    youtube = build(
-        "youtube",
-        "v3",
-        credentials=creds
-    )
-
-    description = safe_ascii(
-        metadata[
-            "description"
-        ],
-        4900
-    )
-
-    hashtags = " ".join(
-        metadata.get(
-            "hashtags",
-            []
-        )[:8]
-    )
-
+    description = safe_ascii(metadata["description"], 4900)
+    hashtags = " ".join(metadata.get("hashtags", [])[:8])
     if hashtags:
-
-        description += (
-            "\n\n"
-            + hashtags
-        )
+        description += "\n\n" + hashtags
 
     body = {
-
         "snippet": {
-
-            "title":
-                safe_ascii(
-                    metadata[
-                        "title"
-                    ],
-                    95
-                ),
-
-            "description":
-                description,
-
-            "tags":
-                metadata.get(
-                    "keywords",
-                    []
-                )[:25],
-
-            "categoryId":
-                "28"
+            "title": safe_ascii(metadata["title"], 95),
+            "description": description,
+            "tags": metadata.get("keywords", [])[:25],
+            "categoryId": "28",
         },
-
         "status": {
-
-            "privacyStatus":
-                "public",
-
-            "selfDeclaredMadeForKids":
-                False
-        }
+            "privacyStatus": "public",
+            "selfDeclaredMadeForKids": False,
+        },
     }
-
-    print(
-        "Uploading to YouTube:",
-        body["snippet"]["title"]
-    )
-
+    print("Uploading to YouTube:", body["snippet"]["title"])
     req = youtube.videos().insert(
         part="snippet,status",
         body=body,
-        media_body=MediaFileUpload(
-            str(VIDEO),
-            mimetype="video/mp4",
-            resumable=True
-        )
+        media_body=MediaFileUpload(str(VIDEO), mimetype="video/mp4", resumable=True),
     )
-
     result = req.execute()
-
-    print(
-        "YouTube upload complete:",
-        result.get("id")
-    )
-
+    print("YouTube upload complete:", result.get("id"))
 
 def main():
 
