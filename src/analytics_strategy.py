@@ -8,7 +8,6 @@ from pathlib import Path
 import requests
 from google import genai
 from google.genai import types
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
@@ -22,8 +21,9 @@ MAX_VIDEOS = 50
 ANALYTICS_VIDEO_LIMIT = 20
 
 YOUTUBE_SCOPES = [
-    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/youtube.readonly",
     "https://www.googleapis.com/auth/yt-analytics.readonly",
+    "https://www.googleapis.com/auth/youtube.upload",
 ]
 
 
@@ -69,21 +69,28 @@ def collect(ids):
 
 
 def load_oauth_credentials():
-    raw = os.environ.get("YOUTUBE_OAUTH_JSON", "").strip()
-    if not raw:
-        raise RuntimeError("YOUTUBE_OAUTH_JSON GitHub Secret is missing.")
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("YOUTUBE_OAUTH_JSON is not valid JSON.") from exc
-    missing = [k for k in ("client_id", "client_secret", "refresh_token") if not data.get(k)]
+    client_id = os.environ.get("YOUTUBE_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET", "").strip()
+    refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN", "").strip()
+
+    missing = [
+        name for name, value in {
+            "YOUTUBE_CLIENT_ID": client_id,
+            "YOUTUBE_CLIENT_SECRET": client_secret,
+            "YOUTUBE_REFRESH_TOKEN": refresh_token,
+        }.items() if not value
+    ]
     if missing:
-        raise RuntimeError("YOUTUBE_OAUTH_JSON is missing: " + ", ".join(missing))
-    credentials = Credentials.from_authorized_user_info(data, YOUTUBE_SCOPES)
-    if credentials.expired and credentials.refresh_token:
-        credentials.refresh(Request())
-    if not credentials.valid:
-        raise RuntimeError("YouTube OAuth credentials are invalid.")
+        raise RuntimeError("Missing YouTube OAuth GitHub Secrets: " + ", ".join(missing))
+
+    credentials = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=YOUTUBE_SCOPES,
+    )
     return credentials
 
 
