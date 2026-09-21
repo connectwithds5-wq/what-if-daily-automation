@@ -36,7 +36,9 @@ jobs:
       WAN_STEPS: "4"
       WAN_GUIDANCE: "1.0"
       WAN_GUIDANCE_2: "3.0"
-      YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID || secrets.YOUTUBE_CHANNEL_ID }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
@@ -86,7 +88,9 @@ jobs:
       - name: Validate secrets
         run: |
           test -n "$GEMINI_API_KEY" || { echo "GEMINI_API_KEY is missing"; exit 1; }
-          test -n "$YOUTUBE_OAUTH_JSON" || { echo "YOUTUBE_OAUTH_JSON is missing"; exit 1; }
+          test -n "$YOUTUBE_CLIENT_ID" || { echo "YOUTUBE_CLIENT_ID is missing"; exit 1; }
+          test -n "$YOUTUBE_CLIENT_SECRET" || { echo "YOUTUBE_CLIENT_SECRET is missing"; exit 1; }
+          test -n "$YOUTUBE_REFRESH_TOKEN" || { echo "YOUTUBE_REFRESH_TOKEN is missing"; exit 1; }
           test -n "$YOUTUBE_API_KEY" || { echo "YOUTUBE_API_KEY is missing"; exit 1; }
           test -n "$YOUTUBE_CHANNEL_ID" || { echo "YOUTUBE_CHANNEL_ID is missing"; exit 1; }
 
