@@ -767,11 +767,28 @@ def write_metadata(story):
 
 
 def upload_youtube(story):
-    raw = os.getenv("YOUTUBE_OAUTH_JSON")
-    if not raw:
-        print("YouTube OAuth not configured; skipping upload.")
-        return
-    creds = Credentials.from_authorized_user_info(json.loads(raw), scopes=["https://www.googleapis.com/auth/youtube.upload"])
+    client_id = os.getenv("YOUTUBE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "").strip()
+    refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "").strip()
+
+    missing = [
+        name for name, value in {
+            "YOUTUBE_CLIENT_ID": client_id,
+            "YOUTUBE_CLIENT_SECRET": client_secret,
+            "YOUTUBE_REFRESH_TOKEN": refresh_token,
+        }.items() if not value
+    ]
+    if missing:
+        raise RuntimeError("Missing YouTube OAuth GitHub Secrets: " + ", ".join(missing))
+
+    creds = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=["https://www.googleapis.com/auth/youtube.upload"],
+    )
     youtube = build("youtube", "v3", credentials=creds)
     body = {"snippet": {"title": safe_ascii(story.get("title", "WHAT IF DAILY"), 95), "description": safe_ascii(story.get("description", ""), 5000), "tags": story.get("keywords", [])[:25], "categoryId": "28"}, "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}}
     media = MediaFileUpload(str(VIDEO), chunksize=-1, resumable=True, mimetype="video/mp4")
