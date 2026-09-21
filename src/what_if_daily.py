@@ -338,19 +338,56 @@ def save_metadata(story):
     return data
 
 
-def upload_youtube(meta):
-    raw=os.getenv("YOUTUBE_OAUTH_JSON")
-    if not raw: print("YOUTUBE_OAUTH_JSON missing; skipping upload"); return
-    d=json.loads(raw)
-    creds=Credentials(None,refresh_token=d["refresh_token"],token_uri="https://oauth2.googleapis.com/token",client_id=d["client_id"],client_secret=d["client_secret"],scopes=["https://www.googleapis.com/auth/youtube.upload"])
-    yt=build("youtube","v3",credentials=creds)
-    desc=safe_ascii(meta["description"],4900); tags=meta.get("hashtags",[])
-    if tags: desc += "\n\n"+" ".join(tags)
-    body={"snippet":{"title":meta["title"],"description":desc,"tags":meta.get("keywords",[])[:25],"categoryId":"28"},"status":{"privacyStatus":"public","selfDeclaredMadeForKids":False}}
-    print("Uploading to YouTube:",body["snippet"]["title"])
-    req=yt.videos().insert(part="snippet,status",body=body,media_body=MediaFileUpload(str(VIDEO),mimetype="video/mp4",resumable=True))
-    result=req.execute(); print("YouTube upload complete:",result.get("id"))
+def upload_youtube(metadata):
+    client_id = os.getenv("YOUTUBE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "").strip()
+    refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "").strip()
 
+    missing = [
+        name for name, value in {
+            "YOUTUBE_CLIENT_ID": client_id,
+            "YOUTUBE_CLIENT_SECRET": client_secret,
+            "YOUTUBE_REFRESH_TOKEN": refresh_token,
+        }.items() if not value
+    ]
+    if missing:
+        raise RuntimeError("Missing YouTube OAuth GitHub Secrets: " + ", ".join(missing))
+
+    creds = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=["https://www.googleapis.com/auth/youtube.upload"],
+    )
+    youtube = build("youtube", "v3", credentials=creds)
+
+    description = safe_ascii(metadata["description"], 4900)
+    hashtags = " ".join(metadata.get("hashtags", [])[:8])
+    if hashtags:
+        description += "\n\n" + hashtags
+
+    body = {
+        "snippet": {
+            "title": safe_ascii(metadata["title"], 95),
+            "description": description,
+            "tags": metadata.get("keywords", [])[:25],
+            "categoryId": "28",
+        },
+        "status": {
+            "privacyStatus": "public",
+            "selfDeclaredMadeForKids": False,
+        },
+    }
+    print("Uploading to YouTube:", body["snippet"]["title"])
+    req = youtube.videos().insert(
+        part="snippet,status",
+        body=body,
+        media_body=MediaFileUpload(str(VIDEO), mimetype="video/mp4", resumable=True),
+    )
+    result = req.execute()
+    print("YouTube upload complete:", result.get("id"))
 
 def main():
     clean()
