@@ -1,13 +1,22 @@
 {
-  "updated_at": "2026-09-22T04:58:19.630630+00:00",
+  "updated_at": "2026-09-22T12:40:51.630398+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "VShIEj5repk",
+      "title": "What If Earth and Venus Swapped Orbits for 24 Hours?",
+      "published_at": "2026-09-22T05:04:44Z",
+      "views": 245,
+      "likes": 10,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "Zfn5nAbScow",
       "title": "What If Earth Swapped Orbits With Ice Giants",
       "published_at": "2026-09-21T18:54:51Z",
-      "views": 215,
-      "likes": 6,
+      "views": 250,
+      "likes": 7,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -15,7 +24,7 @@
       "video_id": "MAt8dXiQVX4",
       "title": "What If Saturn Swapped Orbits with Mars?",
       "published_at": "2026-09-21T07:58:35Z",
-      "views": 182,
+      "views": 198,
       "likes": 7,
       "comments": 0,
       "duration": "PT59S"
@@ -466,7 +475,84 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      }
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 2.0476,
+          "relative_retention": 0.6346
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 2.0476,
+          "relative_retention": 0.5896
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 2.0476,
+          "relative_retention": 0.5497
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 2.0476,
+          "relative_retention": 0.5224
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 2.0476,
+          "relative_retention": 0.5078
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 2.0476,
+          "relative_retention": 0.5017
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 2.0476,
+          "relative_retention": 0.4996
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 2.0,
+          "relative_retention": 0.4991
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 1.8571,
+          "relative_retention": 0.499
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 1.7619,
+          "relative_retention": 0.499
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 1.3333,
+          "relative_retention": 0.4991
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 1.3333,
+          "relative_retention": 0.4991
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 1.3333,
+          "relative_retention": 0.4992
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 1.3333,
+          "relative_retention": 0.4993
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 1.2381,
+          "relative_retention": 0.6572
+        }
+      ]
     },
     {
       "video_id": "TsXuoglBEgU",
@@ -1456,84 +1542,7 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.6223
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.5772
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.5373
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.5099
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.4954
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.4896
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.4884
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.489
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 1.25,
-          "relative_retention": 0.4904
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 1.25,
-          "relative_retention": 0.4921
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.6667,
-          "relative_retention": 0.4983
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.6667,
-          "relative_retention": 0.4983
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.6667,
-          "relative_retention": 0.4982
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.6667,
-          "relative_retention": 0.4982
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 6.25,
-          "relative_retention": 0.5026
-        }
-      ]
+      }
     },
     {
       "video_id": "7thBkWfXx20",
