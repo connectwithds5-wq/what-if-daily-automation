@@ -1,12 +1,21 @@
 {
-  "updated_at": "2026-09-21T18:45:57.895233+00:00",
+  "updated_at": "2026-09-22T04:58:19.630630+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "Zfn5nAbScow",
+      "title": "What If Earth Swapped Orbits With Ice Giants",
+      "published_at": "2026-09-21T18:54:51Z",
+      "views": 215,
+      "likes": 6,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "MAt8dXiQVX4",
       "title": "What If Saturn Swapped Orbits with Mars?",
       "published_at": "2026-09-21T07:58:35Z",
-      "views": 169,
+      "views": 182,
       "likes": 7,
       "comments": 0,
       "duration": "PT59S"
@@ -234,7 +243,7 @@
       "comments": 0,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 22,
+        "views": 23,
         "estimatedMinutesWatched": 3,
         "averageViewDuration": 15,
         "averageViewPercentage": 26.13,
@@ -457,84 +466,7 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 2.0476,
-          "relative_retention": 0.6346
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 2.0476,
-          "relative_retention": 0.5896
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 2.0476,
-          "relative_retention": 0.5497
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 2.0476,
-          "relative_retention": 0.5224
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 2.0476,
-          "relative_retention": 0.5078
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 2.0476,
-          "relative_retention": 0.5017
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 2.0476,
-          "relative_retention": 0.4996
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 2.0,
-          "relative_retention": 0.4991
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 1.8571,
-          "relative_retention": 0.499
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 1.7619,
-          "relative_retention": 0.499
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.4991
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.4991
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.4992
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 1.3333,
-          "relative_retention": 0.4993
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 1.2381,
-          "relative_retention": 0.6572
-        }
-      ]
+      }
     },
     {
       "video_id": "TsXuoglBEgU",
@@ -1224,7 +1156,7 @@
       "comments": 0,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 169,
+        "views": 171,
         "estimatedMinutesWatched": 14,
         "averageViewDuration": 27,
         "averageViewPercentage": 46.11,
@@ -1621,84 +1553,7 @@
         "shares": 0,
         "subscribersGained": 1,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.0484,
-          "relative_retention": 0.3232
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.0484,
-          "relative_retention": 0.2645
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.0484,
-          "relative_retention": 0.2134
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.0323,
-          "relative_retention": 0.1808
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.0323,
-          "relative_retention": 0.1647
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.0323,
-          "relative_retention": 0.1577
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.0323,
-          "relative_retention": 0.1548
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 0.9677,
-          "relative_retention": 0.1538
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 0.9516,
-          "relative_retention": 0.1534
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.9194,
-          "relative_retention": 0.153
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.371,
-          "relative_retention": 0.1619
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.3548,
-          "relative_retention": 0.1652
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.3387,
-          "relative_retention": 0.1688
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.3226,
-          "relative_retention": 0.1727
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.2097,
-          "relative_retention": 0.3042
-        }
-      ]
+      }
     },
     {
       "video_id": "as8bNSvrk78",
@@ -2084,7 +1939,7 @@
       "video_id": "UaEfTVer3J4",
       "title": "What If Earth Lost Its Magnetic Field?",
       "published_at": "2026-09-04T19:39:37Z",
-      "views": 10,
+      "views": 11,
       "likes": 0,
       "comments": 0,
       "duration": "PT1M1S",
