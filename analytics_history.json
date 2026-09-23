@@ -1,13 +1,22 @@
 {
-  "updated_at": "2026-09-22T12:40:51.630398+00:00",
+  "updated_at": "2026-09-23T12:25:59.047012+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "nyAbXazt3U8",
+      "title": "What If an Asteroid Smashed Through the Moon?",
+      "published_at": "2026-09-22T12:49:47Z",
+      "views": 324,
+      "likes": 11,
+      "comments": 1,
+      "duration": "PT59S"
+    },
     {
       "video_id": "VShIEj5repk",
       "title": "What If Earth and Venus Swapped Orbits for 24 Hours?",
       "published_at": "2026-09-22T05:04:44Z",
-      "views": 245,
-      "likes": 10,
+      "views": 386,
+      "likes": 12,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -15,7 +24,7 @@
       "video_id": "Zfn5nAbScow",
       "title": "What If Earth Swapped Orbits With Ice Giants",
       "published_at": "2026-09-21T18:54:51Z",
-      "views": 250,
+      "views": 311,
       "likes": 7,
       "comments": 0,
       "duration": "PT59S"
@@ -24,8 +33,8 @@
       "video_id": "MAt8dXiQVX4",
       "title": "What If Saturn Swapped Orbits with Mars?",
       "published_at": "2026-09-21T07:58:35Z",
-      "views": 198,
-      "likes": 7,
+      "views": 252,
+      "likes": 8,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -135,10 +144,10 @@
       "comments": 0,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 4,
-        "estimatedMinutesWatched": 0,
-        "averageViewDuration": 43,
-        "averageViewPercentage": 74.41,
+        "views": 7,
+        "estimatedMinutesWatched": 1,
+        "averageViewDuration": 48,
+        "averageViewPercentage": 82.31,
         "likes": 0,
         "comments": 0,
         "shares": 0,
@@ -1445,84 +1454,7 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.2364,
-          "relative_retention": 0.5515
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.2,
-          "relative_retention": 0.4922
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.1818,
-          "relative_retention": 0.4319
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.1091,
-          "relative_retention": 0.3782
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.0727,
-          "relative_retention": 0.3336
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.0727,
-          "relative_retention": 0.2962
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.0364,
-          "relative_retention": 0.2641
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.0364,
-          "relative_retention": 0.2366
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 1.0,
-          "relative_retention": 0.2138
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.9273,
-          "relative_retention": 0.1952
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.4364,
-          "relative_retention": 0.1612
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.4182,
-          "relative_retention": 0.1633
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.4182,
-          "relative_retention": 0.1655
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.4182,
-          "relative_retention": 0.1675
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.2727,
-          "relative_retention": 0.2821
-        }
-      ]
+      }
     },
     {
       "video_id": "ELXgl8xz-wE",
@@ -1553,10 +1485,10 @@
       "comments": 0,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 162,
+        "views": 163,
         "estimatedMinutesWatched": 20,
-        "averageViewDuration": 18,
-        "averageViewPercentage": 29.549999999999997,
+        "averageViewDuration": 17,
+        "averageViewPercentage": 29.12,
         "likes": 1,
         "comments": 0,
         "shares": 0,
@@ -1713,10 +1645,10 @@
       "comments": 2,
       "duration": "PT1M1S",
       "owner_analytics": {
-        "views": 184,
+        "views": 185,
         "estimatedMinutesWatched": 23,
-        "averageViewDuration": 23,
-        "averageViewPercentage": 37.93,
+        "averageViewDuration": 22,
+        "averageViewPercentage": 37.25,
         "likes": 2,
         "comments": 1,
         "shares": 0,
@@ -1868,7 +1800,7 @@
       "video_id": "KxodhyyUpIM",
       "title": "What If Water Turned Into Liquid Mercury?",
       "published_at": "2026-09-05T08:21:07Z",
-      "views": 20,
+      "views": 22,
       "likes": 0,
       "comments": 0,
       "duration": "PT1M1S",
