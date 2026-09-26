@@ -1,12 +1,21 @@
 {
-  "updated_at": "2026-09-25T05:01:24.863630+00:00",
+  "updated_at": "2026-09-26T04:57:12.186861+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "FVseShc2vm4",
+      "title": "What If a Dying Star Outshone the Moon?",
+      "published_at": "2026-09-25T05:09:22Z",
+      "views": 47,
+      "likes": 6,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "1Y_AExyo6fA",
       "title": "What If Saturn's Rings Filled Our Daytime Sky?",
       "published_at": "2026-09-24T12:51:47Z",
-      "views": 43,
+      "views": 70,
       "likes": 2,
       "comments": 0,
       "duration": "PT59S"
@@ -15,42 +24,152 @@
       "video_id": "LYIP6b4ZAc4",
       "title": "What If Jupiter and Saturn Swapped Places?",
       "published_at": "2026-09-24T05:22:28Z",
-      "views": 15,
+      "views": 20,
       "likes": 0,
       "comments": 0,
-      "duration": "PT59S"
+      "duration": "PT59S",
+      "owner_analytics": {
+        "views": 1,
+        "estimatedMinutesWatched": 0,
+        "averageViewDuration": 4,
+        "averageViewPercentage": 7.629999999999999,
+        "likes": 0,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      }
     },
     {
       "video_id": "bU_Y4KpgXZI",
       "title": "What If the Sun Blinked Off for 5 Seconds?",
       "published_at": "2026-09-24T05:06:45Z",
-      "views": 214,
+      "views": 279,
       "likes": 8,
-      "comments": 1,
-      "duration": "PT59S"
+      "comments": 2,
+      "duration": "PT59S",
+      "owner_analytics": {
+        "views": 79,
+        "estimatedMinutesWatched": 25,
+        "averageViewDuration": 41,
+        "averageViewPercentage": 70.49,
+        "likes": 2,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 0,
+        "subscribersLost": 0
+      }
     },
     {
       "video_id": "Iq5HFC1AII4",
       "title": "What If Earth Swapped Orbits With Jupiter For Five Seconds?",
       "published_at": "2026-09-23T12:34:10Z",
-      "views": 108,
-      "likes": 7,
+      "views": 115,
+      "likes": 8,
       "comments": 0,
-      "duration": "PT59S"
+      "duration": "PT59S",
+      "owner_analytics": {
+        "views": 95,
+        "estimatedMinutesWatched": 29,
+        "averageViewDuration": 33,
+        "averageViewPercentage": 56.99999999999999,
+        "likes": 7,
+        "comments": 0,
+        "shares": 0,
+        "subscribersGained": 1,
+        "subscribersLost": 0
+      },
+      "retention_curve": [
+        {
+          "video_progress": 0.01,
+          "audience_watch_ratio": 1.28,
+          "relative_retention": 0.6079
+        },
+        {
+          "video_progress": 0.02,
+          "audience_watch_ratio": 1.28,
+          "relative_retention": 0.5662
+        },
+        {
+          "video_progress": 0.03,
+          "audience_watch_ratio": 1.22,
+          "relative_retention": 0.5242
+        },
+        {
+          "video_progress": 0.04,
+          "audience_watch_ratio": 1.18,
+          "relative_retention": 0.4876
+        },
+        {
+          "video_progress": 0.05,
+          "audience_watch_ratio": 1.14,
+          "relative_retention": 0.4577
+        },
+        {
+          "video_progress": 0.06,
+          "audience_watch_ratio": 1.1,
+          "relative_retention": 0.4333
+        },
+        {
+          "video_progress": 0.07,
+          "audience_watch_ratio": 1.1,
+          "relative_retention": 0.4132
+        },
+        {
+          "video_progress": 0.08,
+          "audience_watch_ratio": 1.1,
+          "relative_retention": 0.3973
+        },
+        {
+          "video_progress": 0.09,
+          "audience_watch_ratio": 1.06,
+          "relative_retention": 0.3857
+        },
+        {
+          "video_progress": 0.1,
+          "audience_watch_ratio": 1.02,
+          "relative_retention": 0.3785
+        },
+        {
+          "video_progress": 0.23,
+          "audience_watch_ratio": 0.74,
+          "relative_retention": 0.373
+        },
+        {
+          "video_progress": 0.24,
+          "audience_watch_ratio": 0.74,
+          "relative_retention": 0.3727
+        },
+        {
+          "video_progress": 0.25,
+          "audience_watch_ratio": 0.74,
+          "relative_retention": 0.3729
+        },
+        {
+          "video_progress": 0.26,
+          "audience_watch_ratio": 0.74,
+          "relative_retention": 0.3737
+        },
+        {
+          "video_progress": 0.49,
+          "audience_watch_ratio": 0.52,
+          "relative_retention": 0.4299
+        }
+      ]
     },
     {
       "video_id": "nyAbXazt3U8",
       "title": "What If an Asteroid Smashed Through the Moon?",
       "published_at": "2026-09-22T12:49:47Z",
-      "views": 393,
+      "views": 397,
       "likes": 11,
       "comments": 3,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 309,
-        "estimatedMinutesWatched": 76,
-        "averageViewDuration": 34,
-        "averageViewPercentage": 59.099999999999994,
+        "views": 381,
+        "estimatedMinutesWatched": 90,
+        "averageViewDuration": 33,
+        "averageViewPercentage": 56.95,
         "likes": 11,
         "comments": 1,
         "shares": 0,
@@ -60,78 +179,78 @@
       "retention_curve": [
         {
           "video_progress": 0.01,
-          "audience_watch_ratio": 1.36,
-          "relative_retention": 0.6292
+          "audience_watch_ratio": 1.3333,
+          "relative_retention": 0.6189
         },
         {
           "video_progress": 0.02,
-          "audience_watch_ratio": 1.344,
-          "relative_retention": 0.5877
+          "audience_watch_ratio": 1.3203,
+          "relative_retention": 0.5745
         },
         {
           "video_progress": 0.03,
-          "audience_watch_ratio": 1.288,
-          "relative_retention": 0.548
+          "audience_watch_ratio": 1.268,
+          "relative_retention": 0.5322
         },
         {
           "video_progress": 0.04,
-          "audience_watch_ratio": 1.232,
-          "relative_retention": 0.5158
+          "audience_watch_ratio": 1.2222,
+          "relative_retention": 0.4984
         },
         {
           "video_progress": 0.05,
-          "audience_watch_ratio": 1.184,
-          "relative_retention": 0.4917
+          "audience_watch_ratio": 1.1765,
+          "relative_retention": 0.4739
         },
         {
           "video_progress": 0.06,
-          "audience_watch_ratio": 1.168,
-          "relative_retention": 0.4733
+          "audience_watch_ratio": 1.1634,
+          "relative_retention": 0.4559
         },
         {
           "video_progress": 0.07,
-          "audience_watch_ratio": 1.152,
-          "relative_retention": 0.4581
+          "audience_watch_ratio": 1.1503,
+          "relative_retention": 0.4417
         },
         {
           "video_progress": 0.08,
-          "audience_watch_ratio": 1.112,
-          "relative_retention": 0.4447
+          "audience_watch_ratio": 1.1176,
+          "relative_retention": 0.4299
         },
         {
           "video_progress": 0.09,
-          "audience_watch_ratio": 1.064,
-          "relative_retention": 0.4334
+          "audience_watch_ratio": 1.0719,
+          "relative_retention": 0.4205
         },
         {
           "video_progress": 0.1,
-          "audience_watch_ratio": 1.04,
-          "relative_retention": 0.4242
+          "audience_watch_ratio": 1.0523,
+          "relative_retention": 0.4134
         },
         {
           "video_progress": 0.23,
-          "audience_watch_ratio": 0.768,
-          "relative_retention": 0.4158
+          "audience_watch_ratio": 0.732,
+          "relative_retention": 0.4261
         },
         {
           "video_progress": 0.24,
-          "audience_watch_ratio": 0.76,
-          "relative_retention": 0.418
+          "audience_watch_ratio": 0.7255,
+          "relative_retention": 0.429
         },
         {
           "video_progress": 0.25,
-          "audience_watch_ratio": 0.736,
-          "relative_retention": 0.4198
+          "audience_watch_ratio": 0.7124,
+          "relative_retention": 0.4316
         },
         {
           "video_progress": 0.26,
-          "audience_watch_ratio": 0.696,
-          "relative_retention": 0.4209
+          "audience_watch_ratio": 0.6797,
+          "relative_retention": 0.4337
         },
         {
           "video_progress": 0.49,
-          "audience_watch_ratio": 0.512,
-          "relative_retention": 0.4937
+          "audience_watch_ratio": 0.4902,
+          "relative_retention": 0.4919
         }
       ]
     },
@@ -139,15 +258,15 @@
       "video_id": "VShIEj5repk",
       "title": "What If Earth and Venus Swapped Orbits for 24 Hours?",
       "published_at": "2026-09-22T05:04:44Z",
-      "views": 426,
+      "views": 428,
       "likes": 12,
       "comments": 0,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 380,
-        "estimatedMinutesWatched": 96,
+        "views": 418,
+        "estimatedMinutesWatched": 102,
         "averageViewDuration": 32,
-        "averageViewPercentage": 55.76,
+        "averageViewPercentage": 54.40999999999999,
         "likes": 12,
         "comments": 0,
         "shares": 0,
@@ -157,78 +276,78 @@
       "retention_curve": [
         {
           "video_progress": 0.01,
-          "audience_watch_ratio": 1.3053,
-          "relative_retention": 0.6059
+          "audience_watch_ratio": 1.2818,
+          "relative_retention": 0.5964
         },
         {
           "video_progress": 0.02,
-          "audience_watch_ratio": 1.3053,
-          "relative_retention": 0.5587
+          "audience_watch_ratio": 1.2818,
+          "relative_retention": 0.5481
         },
         {
           "video_progress": 0.03,
-          "audience_watch_ratio": 1.2421,
-          "relative_retention": 0.5139
+          "audience_watch_ratio": 1.2182,
+          "relative_retention": 0.5021
         },
         {
           "video_progress": 0.04,
-          "audience_watch_ratio": 1.2105,
-          "relative_retention": 0.4782
+          "audience_watch_ratio": 1.1909,
+          "relative_retention": 0.4657
         },
         {
           "video_progress": 0.05,
-          "audience_watch_ratio": 1.1895,
-          "relative_retention": 0.4525
+          "audience_watch_ratio": 1.1727,
+          "relative_retention": 0.4394
         },
         {
           "video_progress": 0.06,
-          "audience_watch_ratio": 1.1789,
-          "relative_retention": 0.4337
+          "audience_watch_ratio": 1.1636,
+          "relative_retention": 0.4202
         },
         {
           "video_progress": 0.07,
-          "audience_watch_ratio": 1.1579,
-          "relative_retention": 0.4189
+          "audience_watch_ratio": 1.1455,
+          "relative_retention": 0.4049
         },
         {
           "video_progress": 0.08,
-          "audience_watch_ratio": 1.1263,
-          "relative_retention": 0.4064
+          "audience_watch_ratio": 1.1091,
+          "relative_retention": 0.3921
         },
         {
           "video_progress": 0.09,
-          "audience_watch_ratio": 1.0526,
-          "relative_retention": 0.3962
+          "audience_watch_ratio": 1.0455,
+          "relative_retention": 0.3817
         },
         {
           "video_progress": 0.1,
-          "audience_watch_ratio": 1.0421,
-          "relative_retention": 0.3885
+          "audience_watch_ratio": 1.0364,
+          "relative_retention": 0.3739
         },
         {
           "video_progress": 0.23,
-          "audience_watch_ratio": 0.6632,
-          "relative_retention": 0.4162
+          "audience_watch_ratio": 0.6273,
+          "relative_retention": 0.4128
         },
         {
           "video_progress": 0.24,
-          "audience_watch_ratio": 0.6316,
-          "relative_retention": 0.4211
+          "audience_watch_ratio": 0.6,
+          "relative_retention": 0.4182
         },
         {
           "video_progress": 0.25,
-          "audience_watch_ratio": 0.6211,
-          "relative_retention": 0.4256
+          "audience_watch_ratio": 0.5909,
+          "relative_retention": 0.4231
         },
         {
           "video_progress": 0.26,
-          "audience_watch_ratio": 0.6,
-          "relative_retention": 0.4297
+          "audience_watch_ratio": 0.5727,
+          "relative_retention": 0.4276
         },
         {
           "video_progress": 0.49,
-          "audience_watch_ratio": 0.4632,
-          "relative_retention": 0.5294
+          "audience_watch_ratio": 0.4455,
+          "relative_retention": 0.5322
         }
       ]
     },
@@ -241,10 +360,10 @@
       "comments": 0,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 310,
-        "estimatedMinutesWatched": 73,
-        "averageViewDuration": 37,
-        "averageViewPercentage": 63.68000000000001,
+        "views": 330,
+        "estimatedMinutesWatched": 89,
+        "averageViewDuration": 43,
+        "averageViewPercentage": 73.33,
         "likes": 7,
         "comments": 0,
         "shares": 0,
@@ -254,78 +373,78 @@
       "retention_curve": [
         {
           "video_progress": 0.01,
-          "audience_watch_ratio": 1.3909,
-          "relative_retention": 0.6284
+          "audience_watch_ratio": 1.4828,
+          "relative_retention": 0.6397
         },
         {
           "video_progress": 0.02,
-          "audience_watch_ratio": 1.3636,
-          "relative_retention": 0.5831
+          "audience_watch_ratio": 1.4569,
+          "relative_retention": 0.5969
         },
         {
           "video_progress": 0.03,
-          "audience_watch_ratio": 1.3182,
-          "relative_retention": 0.5421
+          "audience_watch_ratio": 1.4138,
+          "relative_retention": 0.5589
         },
         {
           "video_progress": 0.04,
-          "audience_watch_ratio": 1.3091,
-          "relative_retention": 0.5125
+          "audience_watch_ratio": 1.4052,
+          "relative_retention": 0.5323
         },
         {
           "video_progress": 0.05,
-          "audience_watch_ratio": 1.2818,
-          "relative_retention": 0.495
+          "audience_watch_ratio": 1.3793,
+          "relative_retention": 0.5173
         },
         {
           "video_progress": 0.06,
-          "audience_watch_ratio": 1.2818,
-          "relative_retention": 0.4858
+          "audience_watch_ratio": 1.3793,
+          "relative_retention": 0.5102
         },
         {
           "video_progress": 0.07,
-          "audience_watch_ratio": 1.2636,
-          "relative_retention": 0.4809
+          "audience_watch_ratio": 1.3621,
+          "relative_retention": 0.507
         },
         {
           "video_progress": 0.08,
-          "audience_watch_ratio": 1.2455,
-          "relative_retention": 0.4783
+          "audience_watch_ratio": 1.3448,
+          "relative_retention": 0.5054
         },
         {
           "video_progress": 0.09,
-          "audience_watch_ratio": 1.1727,
-          "relative_retention": 0.4768
+          "audience_watch_ratio": 1.2672,
+          "relative_retention": 0.5046
         },
         {
           "video_progress": 0.1,
-          "audience_watch_ratio": 1.0818,
-          "relative_retention": 0.476
+          "audience_watch_ratio": 1.1983,
+          "relative_retention": 0.5043
         },
         {
           "video_progress": 0.23,
-          "audience_watch_ratio": 0.7455,
-          "relative_retention": 0.4961
+          "audience_watch_ratio": 0.8621,
+          "relative_retention": 0.5008
         },
         {
           "video_progress": 0.24,
-          "audience_watch_ratio": 0.7182,
-          "relative_retention": 0.4976
+          "audience_watch_ratio": 0.8362,
+          "relative_retention": 0.5012
         },
         {
           "video_progress": 0.25,
-          "audience_watch_ratio": 0.7182,
-          "relative_retention": 0.4988
+          "audience_watch_ratio": 0.8276,
+          "relative_retention": 0.5018
         },
         {
           "video_progress": 0.26,
-          "audience_watch_ratio": 0.7091,
-          "relative_retention": 0.4995
+          "audience_watch_ratio": 0.819,
+          "relative_retention": 0.5026
         },
         {
           "video_progress": 0.49,
-          "audience_watch_ratio": 0.5636,
-          "relative_retention": 0.601
+          "audience_watch_ratio": 0.6638,
+          "relative_retention": 0.6184
         }
       ]
     },
@@ -338,7 +457,7 @@
       "comments": 0,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 250,
+        "views": 251,
         "estimatedMinutesWatched": 68,
         "averageViewDuration": 33,
         "averageViewPercentage": 57.32000000000001,
@@ -351,78 +470,78 @@
       "retention_curve": [
         {
           "video_progress": 0.01,
-          "audience_watch_ratio": 1.2845,
-          "relative_retention": 0.6202
+          "audience_watch_ratio": 1.2821,
+          "relative_retention": 0.6198
         },
         {
           "video_progress": 0.02,
-          "audience_watch_ratio": 1.2672,
-          "relative_retention": 0.5794
+          "audience_watch_ratio": 1.265,
+          "relative_retention": 0.5792
         },
         {
           "video_progress": 0.03,
-          "audience_watch_ratio": 1.2328,
-          "relative_retention": 0.5415
+          "audience_watch_ratio": 1.2308,
+          "relative_retention": 0.5416
         },
         {
           "video_progress": 0.04,
-          "audience_watch_ratio": 1.2241,
-          "relative_retention": 0.5131
+          "audience_watch_ratio": 1.2222,
+          "relative_retention": 0.5133
         },
         {
           "video_progress": 0.05,
-          "audience_watch_ratio": 1.1897,
-          "relative_retention": 0.4948
+          "audience_watch_ratio": 1.188,
+          "relative_retention": 0.495
         },
         {
           "video_progress": 0.06,
-          "audience_watch_ratio": 1.181,
-          "relative_retention": 0.4837
+          "audience_watch_ratio": 1.1795,
+          "relative_retention": 0.484
         },
         {
           "video_progress": 0.07,
-          "audience_watch_ratio": 1.181,
-          "relative_retention": 0.4767
+          "audience_watch_ratio": 1.1795,
+          "relative_retention": 0.477
         },
         {
           "video_progress": 0.08,
-          "audience_watch_ratio": 1.1638,
-          "relative_retention": 0.4719
+          "audience_watch_ratio": 1.1624,
+          "relative_retention": 0.4723
         },
         {
           "video_progress": 0.09,
-          "audience_watch_ratio": 1.0948,
-          "relative_retention": 0.4688
+          "audience_watch_ratio": 1.094,
+          "relative_retention": 0.4691
         },
         {
           "video_progress": 0.1,
-          "audience_watch_ratio": 1.0345,
-          "relative_retention": 0.4667
+          "audience_watch_ratio": 1.0342,
+          "relative_retention": 0.4671
         },
         {
           "video_progress": 0.23,
-          "audience_watch_ratio": 0.7586,
-          "relative_retention": 0.4786
+          "audience_watch_ratio": 0.7607,
+          "relative_retention": 0.4788
         },
         {
           "video_progress": 0.24,
-          "audience_watch_ratio": 0.75,
-          "relative_retention": 0.4798
+          "audience_watch_ratio": 0.7521,
+          "relative_retention": 0.4799
         },
         {
           "video_progress": 0.25,
-          "audience_watch_ratio": 0.75,
-          "relative_retention": 0.4808
+          "audience_watch_ratio": 0.7521,
+          "relative_retention": 0.481
         },
         {
           "video_progress": 0.26,
-          "audience_watch_ratio": 0.7414,
-          "relative_retention": 0.4818
+          "audience_watch_ratio": 0.7436,
+          "relative_retention": 0.4819
         },
         {
           "video_progress": 0.49,
-          "audience_watch_ratio": 0.5431,
-          "relative_retention": 0.5645
+          "audience_watch_ratio": 0.547,
+          "relative_retention": 0.5556
         }
       ]
     },
@@ -1057,10 +1176,10 @@
       "comments": 0,
       "duration": "PT59S",
       "owner_analytics": {
-        "views": 241,
+        "views": 242,
         "estimatedMinutesWatched": 42,
         "averageViewDuration": 31,
-        "averageViewPercentage": 53.90999999999999,
+        "averageViewPercentage": 53.55,
         "likes": 2,
         "comments": 0,
         "shares": 0,
@@ -1070,78 +1189,78 @@
       "retention_curve": [
         {
           "video_progress": 0.01,
-          "audience_watch_ratio": 1.2027,
-          "relative_retention": 0.572
+          "audience_watch_ratio": 1.2,
+          "relative_retention": 0.5702
         },
         {
           "video_progress": 0.02,
-          "audience_watch_ratio": 1.2027,
-          "relative_retention": 0.526
+          "audience_watch_ratio": 1.2,
+          "relative_retention": 0.5242
         },
         {
           "video_progress": 0.03,
-          "audience_watch_ratio": 1.1892,
-          "relative_retention": 0.4843
+          "audience_watch_ratio": 1.1867,
+          "relative_retention": 0.4824
         },
         {
           "video_progress": 0.04,
-          "audience_watch_ratio": 1.1892,
-          "relative_retention": 0.4541
+          "audience_watch_ratio": 1.1867,
+          "relative_retention": 0.4521
         },
         {
           "video_progress": 0.05,
-          "audience_watch_ratio": 1.1757,
-          "relative_retention": 0.4364
+          "audience_watch_ratio": 1.1733,
+          "relative_retention": 0.4342
         },
         {
           "video_progress": 0.06,
-          "audience_watch_ratio": 1.1622,
-          "relative_retention": 0.4274
+          "audience_watch_ratio": 1.16,
+          "relative_retention": 0.425
         },
         {
           "video_progress": 0.07,
-          "audience_watch_ratio": 1.1486,
-          "relative_retention": 0.4234
+          "audience_watch_ratio": 1.1467,
+          "relative_retention": 0.4208
         },
         {
           "video_progress": 0.08,
-          "audience_watch_ratio": 1.0811,
-          "relative_retention": 0.4219
+          "audience_watch_ratio": 1.08,
+          "relative_retention": 0.4193
         },
         {
           "video_progress": 0.09,
           "audience_watch_ratio": 1.0,
-          "relative_retention": 0.4222
+          "relative_retention": 0.4194
         },
         {
           "video_progress": 0.1,
-          "audience_watch_ratio": 0.9595,
-          "relative_retention": 0.4235
+          "audience_watch_ratio": 0.96,
+          "relative_retention": 0.4207
         },
         {
           "video_progress": 0.23,
-          "audience_watch_ratio": 0.6351,
-          "relative_retention": 0.4672
+          "audience_watch_ratio": 0.64,
+          "relative_retention": 0.4638
         },
         {
           "video_progress": 0.24,
-          "audience_watch_ratio": 0.6351,
-          "relative_retention": 0.4701
+          "audience_watch_ratio": 0.64,
+          "relative_retention": 0.4666
         },
         {
           "video_progress": 0.25,
-          "audience_watch_ratio": 0.5946,
-          "relative_retention": 0.4727
+          "audience_watch_ratio": 0.6,
+          "relative_retention": 0.4692
         },
         {
           "video_progress": 0.26,
-          "audience_watch_ratio": 0.5811,
-          "relative_retention": 0.4752
+          "audience_watch_ratio": 0.5867,
+          "relative_retention": 0.4716
         },
         {
           "video_progress": 0.49,
-          "audience_watch_ratio": 0.5,
-          "relative_retention": 0.5709
+          "audience_watch_ratio": 0.4933,
+          "relative_retention": 0.5648
         }
       ]
     },
@@ -1357,84 +1476,7 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 3.6286,
-          "relative_retention": 0.6345
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 3.6286,
-          "relative_retention": 0.5894
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 3.6,
-          "relative_retention": 0.5495
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 3.5714,
-          "relative_retention": 0.5222
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 3.5714,
-          "relative_retention": 0.5075
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 3.5714,
-          "relative_retention": 0.5013
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 3.5714,
-          "relative_retention": 0.4994
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 3.5429,
-          "relative_retention": 0.4988
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 3.4,
-          "relative_retention": 0.4987
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 3.3714,
-          "relative_retention": 0.4986
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 2.9714,
-          "relative_retention": 0.4988
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 2.9714,
-          "relative_retention": 0.4989
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 2.9143,
-          "relative_retention": 0.4989
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 2.9143,
-          "relative_retention": 0.499
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 2.7429,
-          "relative_retention": 0.5
-        }
-      ]
+      }
     },
     {
       "video_id": "h-xqMVP_Bds",
