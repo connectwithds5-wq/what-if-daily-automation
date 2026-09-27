@@ -1,13 +1,22 @@
 {
-  "updated_at": "2026-09-27T05:18:12.777026+00:00",
+  "updated_at": "2026-09-27T12:46:08.895046+00:00",
   "analytics_source": "youtube_analytics_api",
   "videos": [
+    {
+      "video_id": "3jjPcJ1w0fw",
+      "title": "What If the Moon Had a Blue Atmosphere?",
+      "published_at": "2026-09-27T05:26:41Z",
+      "views": 185,
+      "likes": 7,
+      "comments": 0,
+      "duration": "PT59S"
+    },
     {
       "video_id": "nONlXbwjs6k",
       "title": "What If Earth Hit Dark Matter?",
       "published_at": "2026-09-26T12:53:06Z",
-      "views": 287,
-      "likes": 8,
+      "views": 304,
+      "likes": 9,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -15,8 +24,8 @@
       "video_id": "twZ3gwmndhI",
       "title": "What If Earth Swept Through Jupiter's Red Spot?",
       "published_at": "2026-09-26T05:05:09Z",
-      "views": 303,
-      "likes": 11,
+      "views": 313,
+      "likes": 12,
       "comments": 0,
       "duration": "PT59S"
     },
@@ -24,7 +33,7 @@
       "video_id": "FVseShc2vm4",
       "title": "What If a Dying Star Outshone the Moon?",
       "published_at": "2026-09-25T05:09:22Z",
-      "views": 55,
+      "views": 58,
       "likes": 7,
       "comments": 0,
       "duration": "PT59S",
@@ -646,7 +655,7 @@
       "video_id": "MAt8dXiQVX4",
       "title": "What If Saturn Swapped Orbits with Mars?",
       "published_at": "2026-09-21T07:58:35Z",
-      "views": 252,
+      "views": 253,
       "likes": 8,
       "comments": 0,
       "duration": "PT59S",
@@ -1379,84 +1388,7 @@
         "shares": 0,
         "subscribersGained": 0,
         "subscribersLost": 0
-      },
-      "retention_curve": [
-        {
-          "video_progress": 0.01,
-          "audience_watch_ratio": 1.2,
-          "relative_retention": 0.5702
-        },
-        {
-          "video_progress": 0.02,
-          "audience_watch_ratio": 1.2,
-          "relative_retention": 0.5242
-        },
-        {
-          "video_progress": 0.03,
-          "audience_watch_ratio": 1.1867,
-          "relative_retention": 0.4824
-        },
-        {
-          "video_progress": 0.04,
-          "audience_watch_ratio": 1.1867,
-          "relative_retention": 0.4521
-        },
-        {
-          "video_progress": 0.05,
-          "audience_watch_ratio": 1.1733,
-          "relative_retention": 0.4342
-        },
-        {
-          "video_progress": 0.06,
-          "audience_watch_ratio": 1.16,
-          "relative_retention": 0.425
-        },
-        {
-          "video_progress": 0.07,
-          "audience_watch_ratio": 1.1467,
-          "relative_retention": 0.4208
-        },
-        {
-          "video_progress": 0.08,
-          "audience_watch_ratio": 1.08,
-          "relative_retention": 0.4193
-        },
-        {
-          "video_progress": 0.09,
-          "audience_watch_ratio": 1.0,
-          "relative_retention": 0.4194
-        },
-        {
-          "video_progress": 0.1,
-          "audience_watch_ratio": 0.96,
-          "relative_retention": 0.4207
-        },
-        {
-          "video_progress": 0.23,
-          "audience_watch_ratio": 0.64,
-          "relative_retention": 0.4638
-        },
-        {
-          "video_progress": 0.24,
-          "audience_watch_ratio": 0.64,
-          "relative_retention": 0.4666
-        },
-        {
-          "video_progress": 0.25,
-          "audience_watch_ratio": 0.6,
-          "relative_retention": 0.4692
-        },
-        {
-          "video_progress": 0.26,
-          "audience_watch_ratio": 0.5867,
-          "relative_retention": 0.4716
-        },
-        {
-          "video_progress": 0.49,
-          "audience_watch_ratio": 0.4933,
-          "relative_retention": 0.5648
-        }
-      ]
+      }
     },
     {
       "video_id": "7bY4ST95dpY",
@@ -2035,26 +1967,6 @@
         "comments": 0,
         "shares": 0,
         "subscribersGained": 1,
-        "subscribersLost": 0
-      }
-    },
-    {
-      "video_id": "UaEfTVer3J4",
-      "title": "What If Earth Lost Its Magnetic Field?",
-      "published_at": "2026-09-04T19:39:37Z",
-      "views": 11,
-      "likes": 0,
-      "comments": 0,
-      "duration": "PT1M1S",
-      "owner_analytics": {
-        "views": 11,
-        "estimatedMinutesWatched": 46,
-        "averageViewDuration": 562,
-        "averageViewPercentage": 922.18,
-        "likes": 0,
-        "comments": 0,
-        "shares": 0,
-        "subscribersGained": 0,
         "subscribersLost": 0
       }
     }
