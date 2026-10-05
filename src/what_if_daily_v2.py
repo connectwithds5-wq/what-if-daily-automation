@@ -16,6 +16,7 @@ from google import genai
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from scripts.youtube_agent import build_youtube_package
 
 WIDTH, HEIGHT, FPS, DURATION = 1080, 1920, 30, 60
 SCENES = 8
@@ -817,7 +818,16 @@ def main():
     narration_sfx = create_scene_audio(story)
     music = create_music()
     mix_audio(silent, narration_sfx, music)
+    package = build_youtube_package(story, scene_info, OUTPUT)
+    story.update({
+        "title": package["seo"]["title"],
+        "description": package["seo"]["description"],
+        "keywords": package["seo"]["keywords"],
+    })
     write_metadata(story)
+    print("YouTube hook score:", package["hook"]["score"])
+    print("Title/thumbnail lint:", package["title_thumbnail"]["issues"] or "PASS")
+    print("Thumbnail:", package.get("thumbnail_path") or "not generated")
     upload_youtube(story)
     print("Final video:", VIDEO)
 
