@@ -163,6 +163,7 @@ jobs:
           print('Workflow YAML parse OK.')
           PY
           python -m py_compile src/what_if_daily_v2.py
+          python -m py_compile scripts/youtube_agent.py
           python -m py_compile scripts/normalize_production.py
           python -m py_compile scripts/smooth_scene_transitions.py
           python -m py_compile scripts/enable_wan22_primary.py
